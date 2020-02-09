@@ -1,9 +1,10 @@
 FROM node:13.8-slim
 WORKDIR /home/node/app
 
-# Install node stuff
-RUN npm install zombie
-RUN npm install express
+COPY ./ ./
+
+# Install the stuff in package.json
+RUN npm install
 
 USER node
 CMD ["node", "app.js"]

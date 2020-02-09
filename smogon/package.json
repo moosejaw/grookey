@@ -1,0 +1,14 @@
+{
+    "name": "smogon_crawler",
+    "version": "0.0.1",
+    "description": "Crawls smogon for stuff.",
+    "author": "yeah...",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "express": "^4.17.1",
+      "zombie": "^6.1.4"
+    }
+  }
