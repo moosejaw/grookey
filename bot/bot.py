@@ -40,15 +40,7 @@ def getSmogonInfo(args):
     return e.appendEmoji('koffing', smogonPrettyPrint(res))
 
 def getRaidInfo(args):
-    e = Emoji()
-    if len(args) != 1:
-        err = f'some error'
-        return err
-
-    # Build the url for smogon
-    gen, pkmn = args
-    url = f'{SMOGON_DEX_URL}/{gen}/pokemon/{pkmn}'
-    return e.appendEmoji('koffing', 'Smogon says...')
+    pass
     # blah blah ...
 
 
