@@ -1,0 +1,22 @@
+version: '3'
+services:
+  bot:
+    build:
+      context: bot/
+      dockerfile: Dockerfile
+    environment:
+        - token
+        - smogonport=8888
+    restart: always
+    container_name: bot
+
+  smogon:
+    build:
+        context: smogon/
+        dockerfile: Dockerfile
+    environment:
+        - port=8888
+    expose:
+        - 8888
+    restart: always
+    container_name: smogon

@@ -1,0 +1,13 @@
+class Emoji:
+    '''Contains the emoji lookups and convenient functions
+    for returning messages.'''
+    def __init__(self):
+        self.emojis = \
+        {
+            'grookey': r'<a:grookey:675858815148752906>',
+            'koffing': r'<a:koffing:675860676836720640>'
+        }
+
+    def appendEmoji(self, emoji, msg):
+        '''Appends an emoji to a given input string.'''
+        return f'{msg} {self.emojis[emoji]}'
