@@ -11,17 +11,33 @@ import discord
 from discord.ext import commands
 
 from modules.Emoji import Emoji
+from modules.SmogonPrettyPrinter import smogonPrettyPrint
 
 SMOGON_DNS  = 'smogon'
 SMOGON_PORT = os.environ['SMOGON_PORT']
 SMOGON_DEX_URL = 'https://www.smogon.com/dex/'
 SMOGON_QUEUE   = queue.Queue(maxsize=500)
 
+def getNodeResponse(params):
+    '''Send a request to the node server. Sorta.'''
+    r = requests.get(f'http://{SMOGON_DNS}:{SMOGON_PORT}/api/', params=params)
+    if not r.text: 
+        return 'Nothing came back from the server.'
+    return r.text
+
 def getSmogonInfo(args):
     e = Emoji()
     if len(args) != 2:
-        return e.appendEmoji('grookey', 'Enter the command in the format: pokémon generation, e.g. grookey ss')
-    return e.appendEmoji('grookey', 'Smogon stuff will go here.')
+        return e.appendEmoji('grookey', 'Enter the command in the format: pokémon metagame, e.g. `grookey ss`')
+
+    pkmn, metagame = args
+    params = {'pkmn': pkmn, 'metagame': metagame}
+    
+    # Get the response
+    res = getNodeResponse(params)
+    if res == '404': 
+        return e.appendEmoji('grookey', 'That page doesn\'t exist on Smogon.')
+    return e.appendEmoji('koffing', smogonPrettyPrint(res))
 
 def getRaidInfo(args):
     e = Emoji()
@@ -35,10 +51,6 @@ def getRaidInfo(args):
     return e.appendEmoji('koffing', 'Smogon says...')
     # blah blah ...
 
-def getNodeResponse(args):
-    '''Send a request to the node server. Sorta.'''
-    r = requests.get('smogon:8888/api/')
-    return r.text
 
 
 # Main
@@ -63,7 +75,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def testsocket(ctx, *args):
-        await ctx.send(getNodeResponse(args))
+        await ctx.send(getSmogonInfo(args))
 
     # Run the bot
     bot.run(token)
