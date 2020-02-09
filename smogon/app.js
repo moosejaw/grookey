@@ -15,4 +15,4 @@ app.get('/api/', function(req, res) {
     res.send('Hi from Node!');
 })
 
-app.listen(process.env.port);
+app.listen(process.env.PORT);

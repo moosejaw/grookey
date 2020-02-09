@@ -13,7 +13,7 @@ from discord.ext import commands
 from modules.Emoji import Emoji
 
 SMOGON_DNS  = 'smogon'
-SMOGON_PORT = os.environ['smogonport']
+SMOGON_PORT = os.environ['SMOGON_PORT']
 SMOGON_DEX_URL = 'https://www.smogon.com/dex/'
 SMOGON_QUEUE   = queue.Queue(maxsize=500)
 
@@ -39,12 +39,12 @@ def getNodeResponse(args):
     '''Send a request to the node server. Sorta.'''
     r = requests.get('smogon:8888/api/')
     return r.text
-    
+
 
 # Main
 if __name__ == '__main__':
     # Start by getting the token from environment variables
-    token = os.environ.get('token')
+    token = os.environ.get('TOKEN')
 
     bot = commands.Bot(command_prefix='!grookey ')
 
