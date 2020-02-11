@@ -1,6 +1,9 @@
 .vscode
 .env
 
+# covering my ass because i leave vim open sometimes
+.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
