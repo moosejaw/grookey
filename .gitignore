@@ -3,6 +3,7 @@
 
 # covering my ass because i leave vim open sometimes
 .swp
+*.swp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
