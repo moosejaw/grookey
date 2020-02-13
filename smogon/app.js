@@ -29,7 +29,7 @@ app.get('/api/', function(req, res) {
     let metagame = req.query.metagame;
     let pokemon  = req.query.pkmn;
     let url = `http://www.smogon.com/dex/${metagame}/pokemon/${pokemon}`;
-    let resp = {msgs: [], titles: [], code: 404};
+    let resp = {msgs: [], titles: [], tier: '', code: 404};
 
     // Go to the smogon page
     console.log(`Going to visit ${url}`);
@@ -49,6 +49,13 @@ app.get('/api/', function(req, res) {
                 });
 
                 console.log(`Got the moveset data at ${getTimeInSecs()}`);
+
+                // Find the tier of the Poke
+                browser.queryAll('tr').forEach((v, i) => {
+                    if (v.children.item(0).textContent == 'Tier') {
+                        resp.tier = v.children.item(1).textContent;
+                    }
+                })
 
                 // Now do the ugly thing to get the moveset titles...
                 // TODO: Don't make this check all divs on the page, there must be a better way
