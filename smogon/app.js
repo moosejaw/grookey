@@ -52,9 +52,10 @@ app.get('/api/', function(req, res) {
 
                 // Find the tier of the Poke
                 browser.queryAll('tr').forEach((v, i) => {
-                    if (v.children.item(0).textContent == 'Tier') {
+                    let tierDone = false;
+                    if (!tierDone && v.children.item(0).textContent == 'Tier') {
                         resp.tier = v.children.item(1).textContent;
-                        break;
+                        tierDone = true;
                     }
                 })
 
