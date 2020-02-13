@@ -44,7 +44,7 @@ app.get('/api/', function(req, res) {
                 // Push the button and copy/paste the textarea stuff
                 movesets.forEach((v, i) => {
                     browser.pressButton(v);
-                    resp.msgs.push(browser.text('textarea'));
+                    resp.msgs.push(browser.query('textarea').textContent);
                     browser.pressButton(v);
                 });
 
