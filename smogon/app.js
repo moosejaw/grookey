@@ -32,6 +32,7 @@ app.get('/api/', function(req, res) {
     let resp = {msgs: [], titles: [], code: 404};
 
     // Go to the smogon page
+    console.log(`Going to visit ${url}`);
     browser.visit(url).then(
         () => {
             console.log(`Visited ${url}`);
