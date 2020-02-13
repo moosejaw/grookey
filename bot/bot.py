@@ -3,8 +3,6 @@
 GrookeyBot for Discord.
 '''
 import os
-import getpass
-import requests
 from datetime import datetime
 
 import discord
@@ -15,20 +13,11 @@ from modules.Smogon import Smogon
 
 SMOGON_DNS  = os.environ['SMOGON_DNS']
 SMOGON_PORT = os.environ['SMOGON_PORT']
-SMOGON_DEX_URL = 'https://www.smogon.com/dex/'
-
-def getNodeResponse(params):
-    '''Tell the node server to get smogon info.'''
-    r = requests.get(f'http://{SMOGON_DNS}:{SMOGON_PORT}/api/', params=params)
-    if not r.json(): 
-        return None
-    print(f'The response was: {r.json()}')
-    return r.json()
 
 def getSmogonInfo(args):
     print(f'Started smogon command at {datetime.now().strftime("%H:%M:%S")}', flush=False)
     e = Emoji()
-    s = Smogon()
+    s = Smogon(SMOGON_DNS, SMOGON_PORT)
 
     # Bad args
     if len(args) != 2:
@@ -43,7 +32,7 @@ def getSmogonInfo(args):
     res       = None
     for i in range(retry_lim):
         print(f'Sending request at {datetime.now().strftime("%H:%M:%S")}', flush=False)
-        res = getNodeResponse(params)
+        res = s.getNodeResponse(params)
         print(f'Request came back at {datetime.now().strftime("%H:%M:%S")}', flush=False)
 
         if not res:

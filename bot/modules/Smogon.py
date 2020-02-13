@@ -1,5 +1,9 @@
+import requests
+
 class Smogon:
-    def __init__(self):
+    def __init__(self, cont_dns, cont_port):
+        self.cont_dns    = cont_dns # DNS name of node container
+        self.cont_port   = cont_port # Port of node container
         self.natureStats = {
             'lonely': '+Atk -Def',
             'adamant': '+Atk -SpA',
@@ -22,6 +26,13 @@ class Smogon:
             'jolly': '+Spe -SpA',
             'naive': '+Spe -SpD'
         }
+
+    def getNodeResponse(self, params):
+        '''Call.'''
+        r = requests.get(f'http://{self.cont_dns}:{self.cont_port}/api/', params=params)
+        if not r.json(): 
+            return None
+        return r.json()
 
     def prependPokemonAndTier(self, pkmn, text, tier):
         '''Returns the movset text with the Pokémon name prepended.'''
