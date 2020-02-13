@@ -29,8 +29,6 @@ class Smogon:
 
     def prettyPrint(self, text, title=''):
         '''Returns moveset text from Smogon in a pretty format.'''
-        if '\n' in text:
-            print(f'\n is in the text!')
         text = text.split('\n')
 
         # Get pokemon and item
