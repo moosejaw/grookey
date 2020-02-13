@@ -60,7 +60,7 @@ def getSmogonInfo(args):
         msg = ''
         for m, t in list(zip(res['msgs'], res['titles'])):
             msg = f'{msg}{s.prettyPrint(m, title=t)}\n\n'
-        msg = s.prependPokemonName(pkmn.lower().capitalize(), msg)
+        msg = s.prependPokemonName(pkmn.lower().capitalize(), msg, res['tier'])
         msg = e.appendEmoji("koffing", msg, prepend=True)
 
         print(f'Done preparing the message at {datetime.now().strftime("%H:%M:%S")}', flush=False)

@@ -23,9 +23,9 @@ class Smogon:
             'naive': '+Spe -SpD'
         }
 
-    def prependPokemonName(self, pkmn, text):
+    def prependPokemonAndTier(self, pkmn, text, tier):
         '''Returns the movset text with the Pokémon name prepended.'''
-        return f'**__{pkmn}__**\n{text}'
+        return f'**__{pkmn}{f'({tier})' if tier else ''}__**\n{text}'
 
     def prettyPrint(self, text, title=''):
         '''Returns moveset text from Smogon in a pretty format.'''
@@ -42,6 +42,10 @@ class Smogon:
         pre_gen_three = False
         moves = []
 
+        line_with_evs = 2
+        line_with_nature = 3
+        first_move_line = 4
+
         # Get moves if gen 1
         ability = None
         if text[1].startswith('-'):
@@ -51,14 +55,19 @@ class Smogon:
         else:
             if 'Ability' in text[1]:
                 ability = text[1].split('Ability: ')[1]
+            else:
+                # No ability in moveset data but pkmn is > gen 3
+                line_with_evs -= 1
+                line_with_nature -= 1
+                first_move_line -= 1
 
-        # Get EVs and nature if <= gen 3
+        # Get EVs and nature if < gen 3
         evs = None
         nature = None
         if not pre_gen_three:
-            evs = text[2].split('EVs:')[1]
-            nature = text[3].split(' Nature')[0].strip()
-            moves = text[4:]
+            evs = text[line_with_evs].split('EVs:')[1]
+            nature = text[line_with_nature].split(' Nature')[0].strip()
+            moves = text[first_move_line:]
 
             nature_spread = self.natureStats[nature.lower()] \
                 if nature.lower() in self.natureStats.keys() \
