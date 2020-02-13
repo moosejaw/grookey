@@ -80,7 +80,10 @@ app.get('/api/', function(req, res) {
                 res.send(resp);
             }
         },
-        () => { res.send(resp); }
+        () => { 
+            console.log(`Rejected promise (404) at ${getTimeInSecs()}`);
+            res.send(resp); 
+        }
     );
 });
 
