@@ -36,7 +36,7 @@ def getSmogonInfo(args):
 
     # Parse the args
     pkmn, metagame = args
-    params = {'pkmn': pkmn, 'metagame': metagame}
+    params = {'pkmn': pkmn.lower(), 'metagame': metagame.lower()}
     
     # Get the response
     retry_lim = 3
@@ -60,7 +60,7 @@ def getSmogonInfo(args):
         msg = ''
         for m, t in list(zip(res['msgs'], res['titles'])):
             msg = f'{msg}{s.prettyPrint(m, title=t)}\n\n'
-        msg = s.prependPokemonName(pkmn.capitalize(), msg)
+        msg = s.prependPokemonName(pkmn.lower().capitalize(), msg)
         msg = e.appendEmoji("koffing", msg, prepend=True)
 
         print(f'Done preparing the message at {datetime.now().strftime("%H:%M:%S")}', flush=False)
