@@ -51,7 +51,8 @@ class Smogon:
             moves = text[1:]
         # Otherwise get ability
         else:
-            ability = text[1].split('Ability')[1]
+            if 'Ability' in text[1]:
+                ability = text[1].split('Ability: ')[1]
 
         # Get EVs and nature if <= gen 3
         evs = None
@@ -72,9 +73,9 @@ class Smogon:
         if ability: to_print.append(f'**Ability\:** {ability.strip()}')
         if nature: to_print.append(f"**Nature\:** {nature.strip()}{f' ({nature_spread})' if nature_spread else ''}")
         if evs: to_print.append(f'**EVs\:** {evs.strip()}')
-        return_msg = ''
-        for part in to_print:
-            return_msg = f'{return_msg}\n{part}'
+        return_msg = to_print[0]
+        for part in range(1, len(to_print)):
+            return_msg = f'{return_msg}\n{to_print[part]}'
         for move in moves:
             return_msg = f'{return_msg}\n{move}'
 
