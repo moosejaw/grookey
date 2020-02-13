@@ -25,7 +25,7 @@ class Smogon:
 
     def prependPokemonAndTier(self, pkmn, text, tier):
         '''Returns the movset text with the Pokémon name prepended.'''
-        return f'**__{pkmn}{f"({tier})" if tier else ""}__**\n{text}'
+        return f'**__{pkmn}{f" ({tier})" if tier else ""}__**\n{text}'
 
     def prettyPrint(self, text, title=''):
         '''Returns moveset text from Smogon in a pretty format.'''
