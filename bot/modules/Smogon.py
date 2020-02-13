@@ -1,6 +1,27 @@
 class Smogon:
     def __init__(self):
-        pass
+        self.natureStats = {
+            'lonely': '+Atk -Def',
+            'adamant': '+Atk -SpA',
+            'naughty': '+Atk -SpD',
+            'brave': '+Atk -Spe',
+            'bold': '+Def -Atk',
+            'impish': '+Def -SpA',
+            'lax': '+Def -SpD',
+            'relaxed': '+Def -Spe',
+            'modest': '+SpA -Atk',
+            'mild': '+SpA -Def',
+            'rash': '+SpA -SpD',
+            'quiet': '+SpA -Spe',
+            'calm': '+SpD -Atk',
+            'gentle': '+SpD -Def',
+            'careful': '+SpD -SpA',
+            'sassy': '+SpD -Spe',
+            'timid': '+Spe -Atk',
+            'hasty': '+Spe -Def',
+            'jolly': '+Spe -SpA',
+            'naive': '+Spe -SpD'
+        }
 
     def prependPokemonName(self, pkmn, text):
         '''Returns the movset text with the Pokémon name prepended.'''
@@ -8,32 +29,53 @@ class Smogon:
 
     def prettyPrint(self, text, title=''):
         '''Returns moveset text from Smogon in a pretty format.'''
-        pkmn, text    = text.split('@')
-        item, text    = text.split('Ability:')
-        ability, text = text.split('EVs:')
-        text, moves   = text.split('Nature', 1)
+        if '\n' in text:
+            print(f'\n is in the text!')
+        text = text.split('\n')
 
-        text   = text.replace(' / ', ' ').split(' ')
-        nature = text[len(text) - 1]
-        text   = text[:-1]
-        del(text[0])
-        del(text[len(text) - 1])
-        evs = ''
-        for ev in text:
-            if ev == '/':
-                evs = f'{evs} / '
-            evs = f'{evs} {ev}'
-        moves = moves.split(' - ')
-        del(moves[0])
+        # Get pokemon and item
+        item = None
+        pkmn = None
+        if '@' in text[0]:
+            pkmn, item = text[0].split(' @ ')
+        else:
+            pkmn = text[0]
 
-        message = \
-    f'''{f'> *{title}*' if title else ''}
-    **Item\:** {item.strip()}
-    **Ability\:** {ability.strip()}
-    **Nature\:** {nature.strip()}
-    **EVs\:** {evs.strip()}
-    **Moves\:**'''
+        pre_gen_three = False
+        moves = []
+
+        # Get moves if gen 1
+        ability = None
+        if text[1].startswith('-'):
+            pre_gen_three = True
+            moves = text[1:]
+        # Otherwise get ability
+        else:
+            ability = text[1].split('Ability')[1]
+
+        # Get EVs and nature if <= gen 3
+        evs = None
+        nature = None
+        if not pre_gen_three:
+            evs = text[2].split('EVs:')[1]
+            nature = text[3].split(' Nature')[0].strip()
+            moves = text[4:]
+
+            nature_spread = self.natureStats[nature.lower()] \
+                if nature.lower() in self.natureStats.keys() \
+                else None
+
+        # Build the things to print
+        to_print = []
+        if title: to_print.append(f'> *{title}*')
+        if item: to_print.append(f'**Item\:** {item.strip()}')
+        if ability: to_print.append(f'**Ability\:** {ability.strip()}')
+        if nature: to_print.append(f"**Nature\:** {nature.strip()}{f' ({nature_spread})' if nature_spread else ''}")
+        if evs: to_print.append(f'**EVs\:** {evs.strip()}')
+        return_msg = ''
+        for part in to_print:
+            return_msg = f'{return_msg}\n{part}'
         for move in moves:
-            message = f'''{message}
-    - {move}'''
-        return message
+            return_msg = f'{return_msg}\n{move}'
+
+        return return_msg
