@@ -34,6 +34,7 @@ app.get('/api/', function(req, res) {
     // Go to the smogon page
     browser.visit(url).then(
         () => {
+            console.log(`Visited ${url}`);
             console.log(`Loaded the page at ${getTimeInSecs()}`);
 
             // Get the moveset data
