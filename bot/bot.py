@@ -47,7 +47,7 @@ def getSmogonInfo(args):
         print(f'Request came back at {datetime.now().strftime("%H:%M:%S")}', flush=False)
 
         if not res:
-            return e.appendEmoji('grookey', 'Nothing came back from the server.')
+            return e.appendEmoji('grookey', 'Nothing came back from Node.')
         
         if res["code"] == 404:
             print(f'Got a 404 response at {datetime.now().strftime("%H:%M:%S")} so sending the response again', flush=False)
