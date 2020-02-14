@@ -49,11 +49,13 @@ app.get('/api/', function(req, res) {
                 console.log(`Got the moveset data at ${getTimeInSecs()}`);
 
                 // Find the tier of the Poke
+                let tierDone = false;
                 browser.queryAll('tr').forEach((v, i) => {
-                    let tierDone = false;
                     if (!tierDone && v.children.item(0).textContent == 'Tier') {
+                        console.log(`Found a tier at index ${i} of trs. The tier is ${v.children.item(1).textContent}`);
                         resp.tier = v.children.item(1).textContent;
                         tierDone = true;
+                        console.log('Set the tierDone to true');
                     }
                 })
 
