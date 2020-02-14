@@ -16,8 +16,6 @@ function getTimeInSecs() {
     return d.toTimeString();
 }
 
-// Create the browser object
-//var browser = new Browser();
 
 app.get('/api/', function(req, res) {
     console.log(`Started responding to a req at ${getTimeInSecs()}`);
