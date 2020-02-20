@@ -76,7 +76,7 @@ if __name__ == '__main__':
     # Start by getting the token from environment variables
     token = os.environ.get('TOKEN')
 
-    bot = commands.Bot(command_prefix='!grookey ')
+    bot = commands.Bot(command_prefix='!g ')
 
     # The async functions...
     @bot.command()
