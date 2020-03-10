@@ -68,9 +68,6 @@ def getRaidInfo(args):
     pass
     # blah blah ...
 
-
-
-# Main
 if __name__ == '__main__':
     print('hi', flush=False)
     # Start by getting the token from environment variables
@@ -81,15 +78,7 @@ if __name__ == '__main__':
     # The async functions...
     @bot.command()
     async def hi(ctx):
-        await ctx.send('hello there!')
-
-    @bot.command()
-    async def something(ctx, *args):
-        await ctx.send(getSmogonInfo(args))
-
-    @bot.command()
-    async def raids(ctx, *args):
-        await ctx.send(getRaidInfo(args))
+        await ctx.send('hello!')
 
     @bot.command()
     async def smogon(ctx, *args):
