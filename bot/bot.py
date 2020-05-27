@@ -10,14 +10,16 @@ from discord.ext import commands
 
 from modules.Emoji import Emoji
 from modules.Smogon import Smogon
+from modules.Frinkiac import Frinkiac
 
+COMMON_PORT = os.environ['COMMON_PORT']
 SMOGON_DNS  = os.environ['SMOGON_DNS']
-SMOGON_PORT = os.environ['SMOGON_PORT']
+FRINKIAC_DNS  = os.environ['FRINKIAC_DNS']
 
 def getSmogonInfo(args):
     print(f'Started smogon command at {datetime.now().strftime("%H:%M:%S")}', flush=False)
     e = Emoji()
-    s = Smogon(SMOGON_DNS, SMOGON_PORT)
+    s = Smogon(SMOGON_DNS, COMMON_PORT)
 
     # Bad args
     if len(args) != 2:
@@ -36,7 +38,7 @@ def getSmogonInfo(args):
         print(f'Request came back at {datetime.now().strftime("%H:%M:%S")}', flush=False)
 
         if not res:
-            return e.appendEmoji('grookey', 'Nothing came back from Node.')
+            return e.appendEmoji('grookey', 'Nothing came back from the Node app.')
         
         if res["code"] == 404:
             print(f'Got a 404 response at {datetime.now().strftime("%H:%M:%S")} so sending the response again', flush=False)
@@ -57,6 +59,7 @@ def getSmogonInfo(args):
 
     # Rejectors
     if not res:
+        # TODO: change some of these
         return 'res is nothing'
     if res['code'] == 404: 
         return e.appendEmoji('grookey', 'That page doesn\'t exist on Smogon.')
@@ -64,9 +67,19 @@ def getSmogonInfo(args):
         return e.appendEmoji('grookey', f'Looks like no data exists for {pkmn.capitalize()} in {metagame.upper()} yet.')
     return 'default return'
 
+
 def getRaidInfo(args):
+    # TODO: This
     pass
-    # blah blah ...
+
+
+def getFrinkiacPic(args):
+    print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}')
+    f = Frinkiac(FRINKIAC_DNS, COMMON_PORT)
+    res = f.getNodeResponse()
+    return f'From season {res["szn"]}: {res["link"]}'
+
+
 
 if __name__ == '__main__':
     print('hey there. starting up now...', flush=False)
@@ -83,6 +96,10 @@ if __name__ == '__main__':
     @bot.command()
     async def smogon(ctx, *args):
         await ctx.send(getSmogonInfo(args))
+
+    @bot.command()
+    async def simp(ctx, *args):
+        await ctx.send(getFrinkiacPic(args))
 
     # Run the bot
     bot.run(token)
