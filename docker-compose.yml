@@ -6,8 +6,9 @@ services:
       dockerfile: Dockerfile
     environment:
         - "TOKEN=${TOKEN}"
+        - COMMON_PORT=8888
         - SMOGON_DNS=smogon
-        - SMOGON_PORT=8888
+        - FRINKIAC_DNS=frinkiac
     restart: always
     container_name: bot
 
