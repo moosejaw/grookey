@@ -69,7 +69,7 @@ def getRaidInfo(args):
     # blah blah ...
 
 if __name__ == '__main__':
-    print('hi', flush=False)
+    print('hey there. starting up now...', flush=False)
     # Start by getting the token from environment variables
     token = os.environ.get('TOKEN')
 
