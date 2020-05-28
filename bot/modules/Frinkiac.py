@@ -1,12 +1,22 @@
-import requests
+import compuglobal
 
-class Frinkiac:
-    def __init__(self, dns, port):
-        self.dns = dns
-        self.port = port
+class Compuglobal:
+    def __init__(self, show=None):
+        self.show = compuglobal.Frinkiac()
+        if show == 'f':
+            self.show = compuglobal.Morbotron()
+        
 
-    def getNodeResponse(self):
-        r = requests.get(f'http://{self.dns}:{self.port}/api/')
-        if not r.json():
-            return None
-        return r
+    def getRandomPicURL(self, use_gif=False, use_caption=False):
+        sc = self.show.get_random_screencap()
+
+        # Use GIF if specified
+        if use_gif:
+            sc = sc.get_gif_url()
+        else:
+            sc = sc.get_meme_url()
+        
+        # Split the URL to remove caption
+        if not use_caption:
+            sc = sc.split('?')[0]
+        return sc

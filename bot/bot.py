@@ -73,12 +73,15 @@ def getRaidInfo(args):
     pass
 
 
-def getFrinkiacPic(args):
+def getFrinkiacPic(args, futurama=False):
     print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}')
-    f = Frinkiac(FRINKIAC_DNS, COMMON_PORT)
-    res = f.getNodeResponse()
-    return f'From season {res["szn"]}: {res["link"]}'
-
+    f = Frinkiac() if not futurama \
+        else Frinkiac(show='f')
+    gif = True if 'g' in args or 'gif' in args \
+        else False
+    caption = True if 'c' in args  or 'caption' in args \
+        else False
+    return f.getRandomPicURL(use_gif=gif, use_caption=caption)
 
 
 if __name__ == '__main__':
@@ -86,7 +89,7 @@ if __name__ == '__main__':
     # Start by getting the token from environment variables
     token = os.environ.get('TOKEN')
 
-    bot = commands.Bot(command_prefix='!g ')
+    bot = commands.Bot(command_prefix='!')
 
     # The async functions...
     @bot.command()
@@ -98,8 +101,12 @@ if __name__ == '__main__':
         await ctx.send(getSmogonInfo(args))
 
     @bot.command()
-    async def simp(ctx, *args):
+    async def s(ctx, *args):
         await ctx.send(getFrinkiacPic(args))
+
+    @bot.command()
+    async def f(ctx, *args):
+        await ctx.send(getFrinkiacPic(args, futurama=True))
 
     # Run the bot
     bot.run(token)
