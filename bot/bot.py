@@ -3,6 +3,8 @@
 GrookeyBot for Discord.
 '''
 import os
+import requests
+from queue import Queue
 from datetime import datetime
 
 import discord
@@ -10,13 +12,22 @@ from discord.ext import commands
 
 from modules.Emoji import Emoji
 from modules.Smogon import Smogon
-from modules.Frinkiac import Frinkiac
+from modules.Frinkiac import Compuglobal
 
 COMMON_PORT = os.environ['COMMON_PORT']
 SMOGON_DNS  = os.environ['SMOGON_DNS']
-FRINKIAC_DNS  = os.environ['FRINKIAC_DNS']
+IMAGE_DIR   = os.environ['IMAGE_DIR']
+IMAGE_QUEUE = Queue() # For deleting images sent from frinkiac
+
+def clearImageQueue():
+    if not IMAGE_QUEUE.empty():
+        while not IMAGE_QUEUE.empty():
+            os.remove(IMAGE_QUEUE.get())
+            IMAGE_QUEUE.task_done()
 
 def getSmogonInfo(args):
+    # TODO: MAKE THE RESPONSE AN EMBED
+    # PLEASE IT'S BEGGING FOR IT
     print(f'Started smogon command at {datetime.now().strftime("%H:%M:%S")}', flush=False)
     e = Emoji()
     s = Smogon(SMOGON_DNS, COMMON_PORT)
@@ -75,13 +86,26 @@ def getRaidInfo(args):
 
 def getFrinkiacPic(args, futurama=False):
     print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}')
-    f = Frinkiac() if not futurama \
-        else Frinkiac(show='f')
+    f = Compuglobal() if not futurama \
+        else Compuglobal(show='f')
     gif = True if 'g' in args or 'gif' in args \
         else False
     caption = True if 'c' in args  or 'caption' in args \
         else False
-    return f.getRandomPicURL(use_gif=gif, use_caption=caption)
+
+    msg = f.getRandomPicURL(use_gif=gif, use_caption=caption)
+    fname = msg.split('/')
+    fname = f'{IMAGE_DIR}/{fname[len(fname) - 1]}'
+
+    # TODO: Saving to disk here because frinkiac won't allow embedded gifs? maybe?
+    res = requests.get(msg)
+    if not res.status_code == 200:
+        return 'bad response'
+    with open(fname, 'wb') as img:
+        img.write(res.content)
+    IMAGE_QUEUE.put(fname)
+    
+    return discord.File(fname)
 
 
 if __name__ == '__main__':
@@ -97,16 +121,22 @@ if __name__ == '__main__':
         await ctx.send('hello!')
 
     @bot.command()
+    async def wat(ctx):
+        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). I tried getting captions to work with `!s c` but it's broken"))
+
+    @bot.command()
     async def smogon(ctx, *args):
         await ctx.send(getSmogonInfo(args))
 
     @bot.command()
     async def s(ctx, *args):
-        await ctx.send(getFrinkiacPic(args))
+        await ctx.send(file=getFrinkiacPic(args))
+        clearImageQueue()
 
     @bot.command()
     async def f(ctx, *args):
-        await ctx.send(getFrinkiacPic(args, futurama=True))
+        await ctx.send(file=getFrinkiacPic(args, futurama=True))
+        clearImageQueue()
 
     # Run the bot
     bot.run(token)
