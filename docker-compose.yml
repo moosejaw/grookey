@@ -8,6 +8,7 @@ services:
         - "TOKEN=${TOKEN}"
         - COMMON_PORT=8888
         - SMOGON_DNS=smogon
+        - IMAGE_DIR=images
     restart: always
     container_name: bot
 
