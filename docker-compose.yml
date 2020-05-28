@@ -8,7 +8,6 @@ services:
         - "TOKEN=${TOKEN}"
         - COMMON_PORT=8888
         - SMOGON_DNS=smogon
-        - FRINKIAC_DNS=frinkiac
     restart: always
     container_name: bot
 
@@ -22,14 +21,3 @@ services:
         - 8888
     restart: always
     container_name: smogon
-
-  frinkiac:
-    build:
-      context: frinkiac/
-      dockerfile: Dockerfile
-    environment:
-      - PORT=8888
-    expose:
-      - 8888
-    restart: always
-    container_name: frinkiac
