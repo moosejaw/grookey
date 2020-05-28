@@ -92,8 +92,10 @@ def getFrinkiacPic(args, futurama=False):
         else False
     caption = True if 'c' in args  or 'caption' in args \
         else False
+    zombie = True if futurama or 'z' in args or 'zombie' in args \
+        else False
 
-    msg = f.getRandomPicURL(use_gif=gif, use_caption=caption)
+    msg = f.getRandomPicURL(use_gif=gif, use_caption=caption, include_zombie=zombie)
     fname = msg.split('/')
     fname = f'{IMAGE_DIR}/{fname[len(fname) - 1]}'
 
@@ -122,7 +124,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def wat(ctx):
-        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). I tried getting captions to work with `!s c` but it's broken"))
+        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). I tried getting captions to work with `!s c` but it's broken. For the simpsons, use `!s z` to include pics from zombie simpsons in the rng"))
 
     @bot.command()
     async def smogon(ctx, *args):
