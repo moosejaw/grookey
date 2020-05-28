@@ -22,7 +22,7 @@ To get the Smogon data, Zombie is used as a headless browser. The URL is built f
 
 This kind of manipulation isn't perfect and can cause the bot to crash for specific Pokémon but it works most of the time. Even Gen I & II where abilities/held items didn't exist return okay.
 
-If the response succeeds, the bot sends a pretty version of the response data.
+If the response succeeds, the bot sends a pretty version of the response data. But not an embed because i'm an IDIOT and didn't read the docs fully before i got to work.
 
 # Disclaimer
 I'm not affiliated with Smogon.
