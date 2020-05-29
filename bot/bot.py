@@ -4,6 +4,7 @@ GrookeyBot for Discord.
 '''
 import os
 import requests
+from time import sleep
 from queue import Queue
 from datetime import datetime
 
@@ -85,7 +86,8 @@ def getRaidInfo(args):
 
 
 def getFrinkiacPic(args, futurama=False):
-    print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}')
+    print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}', flush=False)
+    sleep(0.5) # to stop frinkiac telling me off if people are spamming pic requests
     f = Compuglobal() if not futurama \
         else Compuglobal(show='f')
     gif = True if 'g' in args or 'gif' in args \
@@ -106,6 +108,8 @@ def getFrinkiacPic(args, futurama=False):
     with open(fname, 'wb') as img:
         img.write(res.content)
     IMAGE_QUEUE.put(fname)
+
+    print(f'Got the pic at {datetime.now().strftime("%H:%M:%S")}\n', flush=False)
     
     return discord.File(fname)
 

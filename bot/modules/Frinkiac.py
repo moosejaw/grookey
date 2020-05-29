@@ -8,27 +8,28 @@ class Compuglobal:
         if show == 'f':
             self.show = compuglobal.Morbotron()
 
-    def getScreencap(self):
-        return self.show.get_random_screencap()
+    def roll(self, gif):
+        sc = self.show.get_random_screencap()
+        url = sc.get_meme_url() if not gif else sc.get_gif_url()
+        return url
         
 
     def getRandomPicURL(self, use_gif=False, use_caption=False, include_zombie=False):
-        sc = self.getScreencap()
-        url = sc.get_meme_url() if not use_gif else sc.get_gif_url()
-        valid = False if not include_zombie else True
+        url = ''
+        valid = False
         while not valid:
+            url = self.roll(use_gif)
             season = re.search(r"\/S[0-9]{2}", url).group(0)
-            print(f'the match was {season} and the url was {url}', flush=False)
             season = int(season.split('/S')[1])
             
-            print(f'processed season is {season} and threshold is {self.zombie_threshold}', flush=False)
-            if season <= self.zombie_threshold:
+            # TODO: kinda ugly, can probably be done better. it's not dry?
+            if not include_zombie and season <= self.zombie_threshold:
                 valid = True
-                print(f'pic ok! sending...')
-            else:
-                sc = self.getScreencap()
-                url = sc.get_meme_url()
-                print('pic is from zombie simpsons, rerolling...', flush=False)
+            elif include_zombie and season >= self.zombie_threshold:
+                valid = True
+            if not valid: print('pic not valid, rerolling...', flush=False)
+
+        print(f'pic ok!', flush=False) 
         
         # Split the URL to remove caption
         if not use_caption:
