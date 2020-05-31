@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def wat(ctx):
-        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). I tried getting captions to work with `!s c` but it's broken. For the simpsons, use `!s z` to include pics from zombie simpsons in the rng"))
+        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). Use `!s c` for captions. the text is a random size and is placed randomly somewhere in the picture. For the simpsons, use `!s z` to include pics from zombie simpsons in the rng"))
 
     @bot.command()
     async def smogon(ctx, *args):
