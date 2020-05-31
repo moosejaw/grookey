@@ -3,10 +3,14 @@
 GrookeyBot for Discord.
 '''
 import os
+import base64
+import random
 import requests
 from time import sleep
 from queue import Queue
 from datetime import datetime
+
+from PIL import Image, ImageDraw, ImageFont
 
 import discord
 from discord.ext import commands
@@ -97,21 +101,42 @@ def getFrinkiacPic(args, futurama=False):
     zombie = True if futurama or 'z' in args or 'zombie' in args \
         else False
 
-    msg = f.getRandomPicURL(use_gif=gif, use_caption=caption, include_zombie=zombie)
-    fname = msg.split('/')
+    if caption and gif:
+        return ''
+
+    url, txt = f.getRandomPicURL(use_gif=gif, use_caption=caption, 
+        include_zombie=zombie)
+    fname = url.split('/')
     fname = f'{IMAGE_DIR}/{fname[len(fname) - 1]}'
 
-    # TODO: Saving to disk here because frinkiac won't allow embedded gifs? maybe?
-    res = requests.get(msg)
+    # TODO: Saving to disk here because frinkiac won't allow embedded gifs?
+    res = requests.get(url)
     if not res.status_code == 200:
         return 'bad response'
     with open(fname, 'wb') as img:
         img.write(res.content)
-    IMAGE_QUEUE.put(fname)
+
+    if txt:
+        writeTextToPic(fname, txt, futurama)
 
     print(f'Got the pic at {datetime.now().strftime("%H:%M:%S")}\n', flush=False)
+    IMAGE_QUEUE.put(fname)
+    return fname
+
+
+def writeTextToPic(path, text, futurama):
+    # Decode the base64 text
+    plaintext = base64.b64decode(text).decode() # also converts from bytes to str
     
-    return discord.File(fname)
+    image = Image.open(path)
+    size = random.randrange(30, 42, 2)
+    if futurama: size = size * 3
+    font  = ImageFont.truetype("font/AlteHaasGroteskRegular.ttf", size)
+    draw  = ImageDraw.Draw(image)
+    x, y = [random.randint(10, 300) for i in range(2)]
+    draw.text((x, y), plaintext, font=font)
+    image.save(path, "JPEG")
+
 
 
 if __name__ == '__main__':
@@ -136,12 +161,20 @@ if __name__ == '__main__':
 
     @bot.command()
     async def s(ctx, *args):
-        await ctx.send(file=getFrinkiacPic(args))
+        path = getFrinkiacPic(args)
+        if not path:
+            await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
+        else:
+            await ctx.send(file=discord.File(path))
         clearImageQueue()
 
     @bot.command()
     async def f(ctx, *args):
-        await ctx.send(file=getFrinkiacPic(args, futurama=True))
+        path = getFrinkiacPic(args, futurama=True)
+        if not path:
+            await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
+        else:
+            await ctx.send(file=discord.File(path))
         clearImageQueue()
 
     # Run the bot
