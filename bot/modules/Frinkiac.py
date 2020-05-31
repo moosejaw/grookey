@@ -31,7 +31,8 @@ class Compuglobal:
 
         print(f'pic ok!', flush=False) 
         
-        # Split the URL to remove caption
-        if not use_caption:
-            url = url.split('?')[0]
-        return url
+        # Split the URL to remove caption if needed
+        url, txt = url.split('?b64lines=')
+        txt = txt if use_caption else ''
+        
+        return (url, txt)
