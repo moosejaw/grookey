@@ -133,7 +133,7 @@ def writeTextToPic(path, text, futurama):
     if futurama: size = size * 3
     font  = ImageFont.truetype("font/AlteHaasGroteskRegular.ttf", size)
     draw  = ImageDraw.Draw(image)
-    x, y = [random.randint(10, 300) for i in range(2)]
+    x, y = [random.randint(10, 200) for i in range(2)]
     draw.text((x, y), plaintext, font=font)
     image.save(path, "JPEG")
 
