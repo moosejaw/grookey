@@ -72,12 +72,12 @@ class Smogon:
 
         # Parse the args
         args = list(map(lambda x: str(x).lower(), self.args))
-        if self.args[0] not in self.metagames:
-            metagame = self.args[1]
-            pokemon  = self.args[0]
+        if args[0] not in self.metagames:
+            metagame = args[1]
+            pokemon  = args[0]
         else:
-            metagame = self.args[0]
-            pokemon = self.args[1]
+            metagame = args[0]
+            pokemon = args[1]
 
         params = {'pkmn': pokemon, 'metagame': metagame}
         
@@ -114,14 +114,14 @@ class Smogon:
         if res['code'] == 200:
             tier = res['tier']
             for data, title in list(zip(res['data'], res['titles'])):
-                embed = discord.Embed(title=res['title'], color=self.smogon_colour)
+                embed = discord.Embed(title=title, color=self.smogon_colour)
                 embed.set_author(name=f'{pokemon.lower().capitalize()}{f" [{tier.upper()}]" if tier else ""} ({metagame.upper()})', 
                 url=res['url'])
-                embed.add_field(name="Item", value="Heavy-duty Boots", inline=True)
-                embed.add_field(name="Nature", value="Jolly", inline=True)
-                embed.add_field(name="Ability", value="Libero", inline=True)
-                embed.add_field(name="EVs", value="252 Atk/4 SpD/252 Spe", inline=True)
-                embed.add_field(name="Moves", value="Pyro Ball / Zen Headbutt / U-Turn / Sucker Punch", inline=True)
+
+                # Parse data and build embed
+                data = self.parseMovesetData(data)
+                for field, value in data.items():
+                    embed.add_field(name=field, value=value, inline=True)
                 message_queue.put(embed)
             return message_queue
         
@@ -179,15 +179,28 @@ class Smogon:
                 if nature.lower() in self.nature_stats.keys() \
                 else None
 
+        if nature_spread and nature:
+            nature = f'{nature} ({nature_spread})'
+
+        moves_string = ''
+        first_move   = True
+        for m in moves: 
+            if first_move:
+                moves_string = m
+                first_move = False
+            else:
+                moves_string = f'{moves_string}\n{m}'
+
         # Build dict containing data and return
-        return {
-            'item'   : item.strip() if item else '',
-            'ability': ability.strip() if ability else '',
-            'nature' : [nature.strip() if nature else '',
-                nature_spread if nature_spread else ''],
-            'evs'    : evs.strip() if evs else '',
-            'moves'  : moves
-        }
+        # TODO: make less ugly
+        d = {}
+        if item: d['Item'] = item.strip()
+        if nature: d['Nature'] = [nature.strip()]
+        if nature_spread: d['Nature'].append(nature_spread)
+        if ability: d['Ability'] = ability.strip()
+        if evs: d['EVs'] = evs.strip()
+        d['Moves'] = moves_string
+        return d
 
     def addMetagamesToEmbed(self, embed):
         '''Adds all the possible metagame combinations to a discord.Embed'''
