@@ -1,0 +1,14 @@
+{
+    "name": "deepfrier",
+    "version": "0.0.1",
+    "description": "deep fries an image",
+    "author": "yeah...",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "express": "^4.17.1",
+      "child_process": "^1.0.2"
+    }
+  }
