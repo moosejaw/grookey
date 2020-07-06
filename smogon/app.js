@@ -27,7 +27,7 @@ app.get('/api/', function(req, res) {
     let metagame = req.query.metagame;
     let pokemon  = req.query.pkmn;
     let url = `http://www.smogon.com/dex/${metagame}/pokemon/${pokemon}`;
-    let resp = {msgs: [], titles: [], tier: '', code: 404};
+    let resp = {data: [], titles: [], tier: '', url: url, code: 404};
 
     // Go to the smogon page
     console.log(`Going to visit ${url}`);
@@ -42,7 +42,7 @@ app.get('/api/', function(req, res) {
                 // Push the button and copy/paste the textarea stuff
                 movesets.forEach((v, i) => {
                     browser.pressButton(v);
-                    resp.msgs.push(browser.query('textarea').textContent);
+                    resp.data.push(browser.query('textarea').textContent);
                     browser.pressButton(v);
                 });
 
@@ -86,7 +86,7 @@ app.get('/api/', function(req, res) {
                 res.send(resp);
             }
             else {
-                // No moveset data!
+                // No moveset data! Send a 405 error.
                 resp.code = 405;
                 res.send(resp);
             }

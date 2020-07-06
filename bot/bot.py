@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 '''
-GrookeyBot for Discord.
+bot for discord.
 '''
 import os
+import re
 import base64
 import random
+import asyncio
 import requests
-from time import sleep
 from queue import Queue
+from time import sleep, time
 from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont
@@ -21,19 +23,22 @@ from modules.Frinkiac import Compuglobal
 
 COMMON_PORT = os.environ['COMMON_PORT']
 SMOGON_DNS  = os.environ['SMOGON_DNS']
-IMAGE_DIR   = os.environ['IMAGE_DIR']
-IMAGE_QUEUE = Queue() # For deleting images sent from frinkiac
 
-def clearImageQueue():
-    if not IMAGE_QUEUE.empty():
-        while not IMAGE_QUEUE.empty():
-            os.remove(IMAGE_QUEUE.get())
-            IMAGE_QUEUE.task_done()
+IMAGE_DIR   = os.environ['IMAGE_DIR'] # for frinkiac
+IMAGE_QUEUE = Queue() # For deleting images sent from frinkiac / deepfryer
+
+DEEPFRY_DNS = os.environ['DEEPFRY_DNS']
+DEEPFRY_DIR = os.environ['DEEPFRY_DIR']
+
+async def clearImageQueue():
+    while not IMAGE_QUEUE.empty():
+        print(f'clearing images...')
+        os.remove(IMAGE_QUEUE.get())
+        IMAGE_QUEUE.task_done()
 
 def getSmogonInfo(args):
     # TODO: MAKE THE RESPONSE AN EMBED
     # PLEASE IT'S BEGGING FOR IT
-    print(f'Started smogon command at {datetime.now().strftime("%H:%M:%S")}', flush=False)
     e = Emoji()
     s = Smogon(SMOGON_DNS, COMMON_PORT)
 
@@ -138,6 +143,32 @@ def writeTextToPic(path, text, futurama):
     image.save(path, "JPEG")
 
 
+async def getDeepfriedImage(filename):
+    '''Send image to node container to deep fry it.'''
+    params = {'filename': filename, 'intense': False}
+    req = requests.post(f'http://{DEEPFRY_DNS}:{COMMON_PORT}/api/', params=params)
+
+    # no response
+    if not req.json():
+        print('nothing came back from deepfrier')
+        return (400, '')
+
+    # deepfry failed
+    if req.json()['code'] == 400:
+        print('got 400 from deepfrier')
+        return (400, '')
+
+    # success
+    elif req.json()['code'] == 200:
+        print('success from deepfrier!')
+        ret_filename = req.json()['filename']
+        IMAGE_QUEUE.put(ret_filename) # processed image
+        return (200, f'{DEEPFRY_DIR}/{ret_filename}')
+
+    # fallback
+    else:
+        print('didn\'t get nothing but didn\'t get code 400 either from deepfrier')
+
 
 if __name__ == '__main__':
     print('hey there. starting up now...', flush=False)
@@ -146,7 +177,6 @@ if __name__ == '__main__':
 
     bot = commands.Bot(command_prefix='!')
 
-    # The async functions...
     @bot.command()
     async def hi(ctx):
         await ctx.send('hello!')
@@ -155,9 +185,15 @@ if __name__ == '__main__':
     async def wat(ctx):
         await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). Use `!s c` for captions. the text is a random size and is placed randomly somewhere in the picture. For the simpsons, use `!s z` to include pics from zombie simpsons in the rng"))
 
+
+    # Get pokemon moveset info from smogon
     @bot.command()
     async def smogon(ctx, *args):
-        await ctx.send(getSmogonInfo(args))
+        s = Smogon(SMOGON_DNS, COMMON_PORT, args)
+        responses = s.getMovesetData()
+        while not responses.empty():
+            await ctx.send(responses.get())
+            responses.task_done()
 
     @bot.command()
     async def s(ctx, *args):
@@ -166,7 +202,7 @@ if __name__ == '__main__':
             await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
         else:
             await ctx.send(file=discord.File(path))
-        clearImageQueue()
+        await clearImageQueue()
 
     @bot.command()
     async def f(ctx, *args):
@@ -175,7 +211,49 @@ if __name__ == '__main__':
             await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
         else:
             await ctx.send(file=discord.File(path))
-        clearImageQueue()
+        await clearImageQueue()
+
+    @bot.command()
+    async def df(ctx, *args):
+        images = ctx.message.attachments
+        images = list(filter(lambda x : x.filename.endswith('.jpg') or x.filename.endswith('.png'), images))
+
+        # TODO: do url images get attached as images automatically?
+        if not images:
+            url = ctx.message.content.split('!df ')[1]
+            if re.match(r'http://|https://', url)\
+                and (url.endswith('.jpg') \
+                or url.endswith('.png')):
+                print(f'regex matched in message')
+                images.append(url)            
+
+        filenames = []
+        if images:
+            for img in images:
+                filename = f'{time()}.jpg'
+                path = f'{DEEPFRY_DIR}/{filename}'
+                IMAGE_QUEUE.put(path)
+                if isinstance(img, discord.Attachment):
+                    await img.save(path)
+                elif isinstance(img, str):
+                    with open(path, 'wb') as f:
+                        res = requests.get(img)
+                        f.write(res.content)
+                filenames.append(filename)
+
+            for filename in filenames:
+                print(f'sending {filename} to deepfrier')
+                code, pic = getDeepfriedImage(filename)
+                if pic:
+                    print('got the new file')
+                    await asyncio.wait(1)
+                    await ctx.send(file=discord.File(pic))
+                elif code == 400:
+                    await ctx.send('something went wrong!')
+
+            # await asyncio.sleep(2)
+            clearImageQueue()
+            print(f'deleted img')
 
     # Run the bot
     bot.run(token)

@@ -1,10 +1,17 @@
+import discord
 import requests
+from queue import Queue
 
 class Smogon:
-    def __init__(self, cont_dns, cont_port):
-        self.cont_dns    = cont_dns # DNS name of node container
-        self.cont_port   = cont_port # Port of node container
-        self.natureStats = {
+    def __init__(self, cont_dns, cont_port, args):
+        self.args = args
+
+        # Container DNS and port
+        self.cont_dns    = cont_dns
+        self.cont_port   = cont_port
+
+        # Reference
+        self.nature_stats = {
             'lonely': '+Atk -Def',
             'adamant': '+Atk -SpA',
             'naughty': '+Atk -SpD',
@@ -26,36 +33,124 @@ class Smogon:
             'jolly': '+Spe -SpA',
             'naive': '+Spe -SpD'
         }
+        self.metagames = [
+            'rb', 'gs', 'rs', 'dp', 'bw', 'xy', 'sm', 'ss'
+        ]
+        self.retry_lim = 3 # number of times to retry sending requests
 
-    def getNodeResponse(self, params):
-        '''Call.'''
+        # Embed properties
+        self.error_colour  = 0xe42e2e
+        self.smogon_colour = 0x8562a4
+
+    def getData(self, params):
+        '''Call the Smogon API through the docker container.'''
         r = requests.get(f'http://{self.cont_dns}:{self.cont_port}/api/', params=params)
         if not r.json(): 
             return None
         return r.json()
 
-    def prependPokemonAndTier(self, pkmn, text, tier):
-        '''Returns the movset text with the Pokémon name prepended.'''
-        return f'**__{pkmn}{f" ({tier})" if tier else ""}__**\n{text}'
+    def getMovesetData(self):
+        message_queue = Queue()
 
-    def prettyPrint(self, text, title=''):
-        '''Returns moveset text from Smogon in a pretty format.'''
+        # Not enough arguments
+        if len(self.args) != 2:
+            embed = self.addMetagamesToEmbed(\
+                discord.Embed(title="Not enough arguments!", \
+                    description="Make sure you include a Pokémon and a metagame in your command."))
+            message_queue.put(embed)
+            return message_queue
+        # Metagame isn't two letters long
+        elif not list(filter(lambda x: len(x) == 2, self.args)):
+            embed = self.addMetagamesToEmbed(\
+                discord.Embed(title="Invalid metagame argument!", \
+                    description="Make sure you include a valid metagame."))
+            message_queue.put(embed)
+            return message_queue
+
+        # TODO: Get emojis working here
+        #e = Emoji()
+
+        # Parse the args
+        args = list(map(lambda x: str(x).lower(), self.args))
+        if self.args[0] not in self.metagames:
+            metagame = self.args[1]
+            pokemon  = self.args[0]
+        else:
+            metagame = self.args[0]
+            pokemon = self.args[1]
+
+        params = {'pkmn': pokemon, 'metagame': metagame}
+        
+        # Get the response from the docker container
+        res = None
+        for i in range(self.retry_lim):
+            r = requests.get(f'http://{self.cont_dns}:{self.cont_port}/api/', params=params)
+            if not r.json():
+                if i < self.retry_lim:
+                    continue 
+                else:
+                    return discord.Embed(title="No response!", 
+                        description="Didn't get a response from the Smogon API container. Is it running?", 
+                        color=self.error_colour)
+            else:
+                res = r.json()
+                break
+
+        # Send an error if a 404 or 405 came back
+        if res['code'] == 404:
+            embed = discord.Embed(title="Page not found!",
+                description="Smogon returned a 404 (page not found) error. Did you spell everything correctly?",
+                color=self.error_colour)
+            message_queue.put(embed)
+            return message_queue
+        elif res['code'] == 405:
+            embed = discord.Embed(title="No moveset data!",
+                description="Looks like no moveset data exists for that Pokémon (yet). Sorry!",
+                color=self.error_colour)
+            message_queue.put(embed)
+            return message_queue
+
+        # On success
+        if res['code'] == 200:
+            tier = res['tier']
+            for data, title in list(zip(res['data'], res['titles'])):
+                embed = discord.Embed(title=res['title'], color=self.smogon_colour)
+                embed.set_author(name=f'{pokemon.lower().capitalize()}{f" [{tier.upper()}]" if tier else ""} ({metagame.upper()})', 
+                url=res['url'])
+                embed.add_field(name="Item", value="Heavy-duty Boots", inline=True)
+                embed.add_field(name="Nature", value="Jolly", inline=True)
+                embed.add_field(name="Ability", value="Libero", inline=True)
+                embed.add_field(name="EVs", value="252 Atk/4 SpD/252 Spe", inline=True)
+                embed.add_field(name="Moves", value="Pyro Ball / Zen Headbutt / U-Turn / Sucker Punch", inline=True)
+                message_queue.put(embed)
+            return message_queue
+        
+        # Fallback
+        embed = discord.Embed(title="Unexpected API return!",
+            description="The Smogon API container did something I wasn\'t expecting.",
+            color=self.error_colour)
+        message_queue.put(embed)
+        return message_queue
+
+    def getEmbedTitle(self, pkmn, tier, metagame):
+        '''Returns the movset text with the Pokémon name prepended.'''
+        return f'{pkmn.lower().capitalize()}{f" [{tier.upper()}]" if tier else ""} ({metagame.upper()})'
+
+    def parseMovesetData(self, text):
+        '''Returns moveset data from Smogon in a dictionary.'''
         text = text.split('\n')
 
         # Get pokemon and item
         item = None
-        pkmn = None
         if '@' in text[0]:
-            pkmn, item = text[0].split(' @ ')
-        else:
-            pkmn = text[0]
+            item = text[0].split(' @ ')[1]
 
         pre_gen_three = False
         moves = []
 
-        line_with_evs = 2
+        line_with_evs    = 2
         line_with_nature = 3
-        first_move_line = 4
+        first_move_line  = 4
 
         # Get moves if gen 1
         ability = None
@@ -80,21 +175,29 @@ class Smogon:
             nature = text[line_with_nature].split(' Nature')[0].strip()
             moves = text[first_move_line:]
 
-            nature_spread = self.natureStats[nature.lower()] \
-                if nature.lower() in self.natureStats.keys() \
+            nature_spread = self.nature_stats[nature.lower()] \
+                if nature.lower() in self.nature_stats.keys() \
                 else None
 
-        # Build the things to print
-        to_print = []
-        if title: to_print.append(f'> *{title}*')
-        if item: to_print.append(f'**Item\:** {item.strip()}')
-        if ability: to_print.append(f'**Ability\:** {ability.strip()}')
-        if nature: to_print.append(f"**Nature\:** {nature.strip()}{f' ({nature_spread})' if nature_spread else ''}")
-        if evs: to_print.append(f'**EVs\:** {evs.strip()}')
-        return_msg = to_print[0]
-        for part in range(1, len(to_print)):
-            return_msg = f'{return_msg}\n{to_print[part]}'
-        for move in moves:
-            return_msg = f'{return_msg}\n{move}'
+        # Build dict containing data and return
+        return {
+            'item'   : item.strip() if item else '',
+            'ability': ability.strip() if ability else '',
+            'nature' : [nature.strip() if nature else '',
+                nature_spread if nature_spread else ''],
+            'evs'    : evs.strip() if evs else '',
+            'moves'  : moves
+        }
 
-        return return_msg
+    def addMetagamesToEmbed(self, embed):
+        '''Adds all the possible metagame combinations to a discord.Embed'''
+        embed.add_field(name="Red/Blue", value="`rb`", inline=True)
+        embed.add_field(name="Gold/Silver/Crystal", value="`gs`", inline=True)
+        embed.add_field(name="Ruby/Sapphire/Emerald", value="`rs`", inline=True)
+        embed.add_field(name="Diamond/Pearl/Platinum", value="`dp`", inline=True)
+        embed.add_field(name="Black/White/Black 2/White 2", value="`bw`", inline=True)
+        embed.add_field(name="X/Y", value="`xy`", inline=True)
+        embed.add_field(name="Sun/Moon/Ultra Sun/Ultra Moon", value="`sm`", inline=True)
+        embed.add_field(name="Sword/Shield", value="`ss`", inline=False)
+        embed.set_footer(text="These are the valid metagames you can choose from. A valid command looks like `!smogon grookey ss`")
+        return embed
