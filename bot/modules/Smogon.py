@@ -1,3 +1,4 @@
+import random
 import discord
 import requests
 from queue import Queue
@@ -40,7 +41,7 @@ class Smogon:
 
         # Embed properties
         self.error_colour  = 0xe42e2e
-        self.smogon_colour = 0x8562a4
+        self.smogon_colour = hex(random.randint(0,16777215))
 
     def getData(self, params):
         '''Call the Smogon API through the docker container.'''
@@ -114,9 +115,10 @@ class Smogon:
         if res['code'] == 200:
             tier = res['tier']
             for data, title in list(zip(res['data'], res['titles'])):
-                embed = discord.Embed(title=title, color=self.smogon_colour)
-                embed.set_author(name=f'{pokemon.lower().capitalize()}{f" [{tier.upper()}]" if tier else ""} ({metagame.upper()})', 
-                url=res['url'])
+                embed = discord.Embed(title=title, 
+                    color=self.smogon_colour,
+                    description=f'{pokemon.lower().capitalize()}{f" [{tier.upper()}]" if tier else ""} ({metagame.upper()})',
+                    url=res['url'])
 
                 # Parse data and build embed
                 data = self.parseMovesetData(data)
@@ -195,8 +197,7 @@ class Smogon:
         # TODO: make less ugly
         d = {}
         if item: d['Item'] = item.strip()
-        if nature: d['Nature'] = [nature.strip()]
-        if nature_spread: d['Nature'].append(nature_spread)
+        if nature: d['Nature'] = nature.strip()
         if ability: d['Ability'] = ability.strip()
         if evs: d['EVs'] = evs.strip()
         d['Moves'] = moves_string
@@ -211,6 +212,6 @@ class Smogon:
         embed.add_field(name="Black/White/Black 2/White 2", value="`bw`", inline=True)
         embed.add_field(name="X/Y", value="`xy`", inline=True)
         embed.add_field(name="Sun/Moon/Ultra Sun/Ultra Moon", value="`sm`", inline=True)
-        embed.add_field(name="Sword/Shield", value="`ss`", inline=False)
+        embed.add_field(name="Sword/Shield", value="`ss`", inline=True)
         embed.set_footer(text="These are the valid metagames you can choose from. A valid command looks like `!smogon grookey ss`")
         return embed
