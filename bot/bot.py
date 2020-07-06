@@ -190,10 +190,10 @@ if __name__ == '__main__':
     @bot.command()
     async def smogon(ctx, *args):
         s = Smogon(SMOGON_DNS, COMMON_PORT, args)
-        responses = s.getMovesetData()
-        while not responses.empty():
-            await ctx.send(responses.get())
-            responses.task_done()
+        response_queue = s.getMovesetData()
+        while not response_queue.empty():
+            await ctx.send(embed=response_queue.get())
+            response_queue.task_done()
 
     @bot.command()
     async def s(ctx, *args):
