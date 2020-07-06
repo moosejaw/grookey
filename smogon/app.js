@@ -93,6 +93,7 @@ app.get('/api/', function(req, res) {
         },
         () => { 
             console.log(`Rejected promise (404) at ${getTimeInSecs()}`);
+            console.log(`Returning ${JSON.stringify(resp)}`);
             res.send(resp); 
         }
     );
