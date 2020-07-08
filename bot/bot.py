@@ -216,16 +216,17 @@ if __name__ == '__main__':
     @bot.command()
     async def df(ctx, *args):
         images = ctx.message.attachments
-        images = list(filter(lambda x : x.filename.endswith('.jpg') or x.filename.endswith('.png'), images))
+        images = list(filter(
+            lambda x: x.filename.endswith('.jpg')
+            or x.filename.endswith('.png'), images)
+        )
 
         # TODO: do url images get attached as images automatically?
         if not images:
             url = ctx.message.content.split('!df ')[1]
-            if re.match(r'http://|https://', url)\
-                and (url.endswith('.jpg') \
-                or url.endswith('.png')):
+            if re.match(r'http://|https://', url) and (url.endswith('.jpg') or url.endswith('.png')):
                 print(f'regex matched in message')
-                images.append(url)            
+                images.append(url)
 
         filenames = []
         if images:
