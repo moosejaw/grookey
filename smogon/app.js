@@ -27,7 +27,14 @@ app.get('/api/', function(req, res) {
     let metagame = req.query.metagame;
     let pokemon  = req.query.pkmn;
     let url = `http://www.smogon.com/dex/${metagame}/pokemon/${pokemon}`;
-    let resp = {data: [], titles: [], tier: '', url: url, code: 404};
+    let resp = {
+        data: [],
+        titles: [],
+        tier: '',
+        url: url,
+        types: [],
+        code: 404
+    };
 
     // Go to the smogon page
     console.log(`Going to visit ${url}`);
@@ -35,6 +42,23 @@ app.get('/api/', function(req, res) {
         () => {
             console.log(`Visited ${url}`);
             console.log(`Loaded the page at ${getTimeInSecs()}`);
+
+            // Get the typing of the pokemon
+            let types = browser.queryAll('.TypeList');
+            for (let item of types[0].children) {
+                if (resp.types.length == 2) { break; }
+                else {
+                    resp.types.push(item.textContent.toLowerCase());
+                }
+            }
+
+            /*
+            let pageTypes = document.getElementsByClassName('.TypeList').children;
+            for (let item of pageTypes) {
+                console.log(`the item is: ${item}`);
+                resp.types.push(item.innerText.toLowerCase()); 
+            }
+            */
 
             // Get the moveset data
             let movesets = browser.queryAll('.ExportButton');
@@ -57,7 +81,7 @@ app.get('/api/', function(req, res) {
                         tierDone = true;
                         console.log('Set the tierDone to true');
                     }
-                })
+                });
 
                 // Now do the ugly thing to get the moveset titles...
                 // TODO: Don't make this check all divs on the page, there must be a better way
