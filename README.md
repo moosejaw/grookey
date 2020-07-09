@@ -6,6 +6,8 @@ A discord bot for competitive Pokémon battling related things, plus some other 
 
 The primary selling point of grookey is that it can retrieve data from Smogon and send it back in a pretty format within discord. Want to know Dragapult's competitive movesets in Sword and Shield? No problem:
 
+![Screenshot showing Dragapult's moveset information from Smogon](doc/moveset_example.png)
+
 ## What other alternatives are there?
 
 The bot which has the most similar functionality to grookey is [SableyeBot3](https://github.com/JsKingBoo/SableyeBot3) which you may also want to consider using. The difference between grookey and SableyeBot is that grookey hooks directly into Smogon's web interface, whereas SableyeBot uses the databases provided in Pokémon Showdown to retrieve information.
@@ -50,7 +52,7 @@ To get the Smogon data, Zombie is used as a headless browser. The URL is built f
 
 This kind of manipulation isn't perfect and can cause the bot to crash for specific Pokémon but it works most of the time. Even Gen I & II where abilities/held items didn't exist return okay.
 
-If the response succeeds, the bot sends the moveset information, the titles of the movesets, and the type of the Pokémon in separate fields in an object. The moveset information and the titles correspond with each other, so the first title in the title array is the title for the first moveset in the moveset array, and so on. This means that you can zip them together if you need to.
+If the response succeeds, the bot sends the moveset information, the titles of the movesets, and the type of the Pokémon in separate fields in an object. The moveset information and the titles correspond with each other, so the first title in the title array is the title for the first moveset in the moveset array, and so on. This means that you can `zip` them together if you need to.
 
 The response sent by the Bot is an embed containing the key moveset information: ability, nature, EVs, held item and moves.
 
