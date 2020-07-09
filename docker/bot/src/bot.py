@@ -22,19 +22,25 @@ async def send_message_queue(ctx, queue):
 
 
 if __name__ == '__main__':
-    print(r'''  ___  ____   __    __  __ _  ____  _  _
- / __)(  _ \ /  \  /  \(  / )(  __)( \/ )
-( (_ \ )   /(  O )(  O ))  (  ) _)  )  /
- \___/(__\_) \__/  \__/(__\_)(____)(__/
-    ''', flush=False)
-
     # Get token from .env file
     token = os.environ.get('TOKEN')
-    bot = commands.Bot(command_prefix='!')
+    bot = commands.Bot(command_prefix='g!')
+
+    @bot.event
+    async def on_ready():
+        print(r'''
+  ___  ____   __    __  __ _  ____  _  _
+ / __)(  _ \ /  \  /  \(  / )(  __)( \/ )
+( (_ \ )   /(  O )(  O ))  (  ) _)  )  /
+ \___/(__\_) \__/  \__/(__\_)(____)(__/ ''', flush=False)
+        await bot.change_presence(activity=discord.Game(
+            'g!help to show command list!'
+            )
+        )
 
     # Smogon: moveset data
     @bot.command()
-    async def smogon(ctx, *args):
+    async def movesets(ctx, *args):
         s = Smogon(SMOGON_DNS, COMMON_PORT)
         response_queue = s.get_moveset_data(args)
         await send_message_queue(ctx, response_queue)
