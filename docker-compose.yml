@@ -6,8 +6,8 @@ services:
       dockerfile: Dockerfile
     environment:
         - "TOKEN=${TOKEN}"
-        - COMMON_PORT=8888
-        - SMOGON_DNS=smogon
+        - "COMMON_PORT=${PORT}"
+        - "SMOGON_DNS=${SMOGON_DNS}"
     restart: always
     container_name: bot
 
@@ -16,8 +16,8 @@ services:
         context: docker/smogon/
         dockerfile: Dockerfile
     environment:
-        - PORT=8888
+        - "PORT=${PORT}"
     expose:
-        - 8888
+        - "${PORT}"
     restart: always
-    container_name: smogon
+    container_name: "${SMOGON_DNS}"
