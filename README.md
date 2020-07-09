@@ -14,7 +14,7 @@ The bot which has the most similar functionality to grookey is [SableyeBot3](htt
 
 ## Installing for self-hosting
 
-To install you need Docker and Docker Compose. You also need to get your bot token from the Discord dashboard and copy/paste it into a `.env` file, where the variable is named `TOKEN`.
+To install you need Docker and Docker Compose. You also need to get your bot token from the Discord dashboard and copy/paste it into a `.env` file located in the **root directory of this repo**, where the variable is named `TOKEN`.
 
 Then all you need to do is open a terminal, navigate to this folder and run:
 
