@@ -40,7 +40,7 @@ For Node containers, the `express` package from `npm` is used to handle the inco
 
 ### Bot
 
-Based on the slim Python 3.7 image, this container runs the code which interacts with Discord.
+Based on Python 3.8, this container runs the code which interacts with Discord.
 
 ### Smogon
 
