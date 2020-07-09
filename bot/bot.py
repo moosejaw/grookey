@@ -22,71 +22,20 @@ from modules.Smogon import Smogon
 from modules.Frinkiac import Compuglobal
 
 COMMON_PORT = os.environ['COMMON_PORT']
-SMOGON_DNS  = os.environ['SMOGON_DNS']
+SMOGON_DNS = os.environ['SMOGON_DNS']
 
-IMAGE_DIR   = os.environ['IMAGE_DIR'] # for frinkiac
-IMAGE_QUEUE = Queue() # For deleting images sent from frinkiac / deepfryer
+IMAGE_DIR = os.environ['IMAGE_DIR']  # for frinkiac
+IMAGE_QUEUE = Queue()  # for deleting images sent from frinkiac / deepfryer
 
 DEEPFRY_DNS = os.environ['DEEPFRY_DNS']
 DEEPFRY_DIR = os.environ['DEEPFRY_DIR']
+
 
 async def clearImageQueue():
     while not IMAGE_QUEUE.empty():
         print(f'clearing images...')
         os.remove(IMAGE_QUEUE.get())
         IMAGE_QUEUE.task_done()
-
-def getSmogonInfo(args):
-    # TODO: MAKE THE RESPONSE AN EMBED
-    # PLEASE IT'S BEGGING FOR IT
-    e = Emoji()
-    s = Smogon(SMOGON_DNS, COMMON_PORT)
-
-    # Bad args
-    if len(args) != 2:
-        return e.appendEmoji('grookey', 'Enter the command in the format: pokémon metagame, e.g. `grookey ss`')
-
-    # Parse the args
-    pkmn, metagame = args
-    params = {'pkmn': pkmn.lower(), 'metagame': metagame.lower()}
-    
-    # Get the response
-    retry_lim = 3
-    res       = None
-    for i in range(retry_lim):
-        print(f'Sending request at {datetime.now().strftime("%H:%M:%S")}', flush=False)
-        res = s.getNodeResponse(params)
-        print(f'Request came back at {datetime.now().strftime("%H:%M:%S")}', flush=False)
-
-        if not res:
-            return e.appendEmoji('grookey', 'Nothing came back from the Node app.')
-        
-        if res["code"] == 404:
-            print(f'Got a 404 response at {datetime.now().strftime("%H:%M:%S")} so sending the response again', flush=False)
-            continue
-        else:
-            break
-
-    # On success
-    if res['code'] == 200:
-        msg = ''
-        for m, t in list(zip(res['msgs'], res['titles'])):
-            msg = f'{msg}{s.prettyPrint(m, title=t)}\n\n'
-        msg = s.prependPokemonAndTier(pkmn.lower().capitalize(), msg, res['tier'])
-        msg = e.appendEmoji("koffing", msg, prepend=True)
-
-        print(f'Done preparing the message at {datetime.now().strftime("%H:%M:%S")}', flush=False)
-        return msg
-
-    # Rejectors
-    if not res:
-        # TODO: change some of these
-        return 'res is nothing'
-    if res['code'] == 404: 
-        return e.appendEmoji('grookey', 'That page doesn\'t exist on Smogon.')
-    if res['code'] == 405:
-        return e.appendEmoji('grookey', f'Looks like no data exists for {pkmn.capitalize()} in {metagame.upper()} yet.')
-    return 'default return'
 
 
 def getRaidInfo(args):
@@ -95,13 +44,19 @@ def getRaidInfo(args):
 
 
 def getFrinkiacPic(args, futurama=False):
-    print(f'Got a request for a frinkiac pic at {datetime.now().strftime("%H:%M:%S")}', flush=False)
-    sleep(0.5) # to stop frinkiac telling me off if people are spamming pic requests
+    print((
+        'Got a request for a frinkiac pic at'
+        f' {datetime.now().strftime("%H:%M:%S")}'
+        ),
+        flush=False
+    )
+    sleep(0.5)  # to stop frinkiac telling me off if people are spamming
+
     f = Compuglobal() if not futurama \
         else Compuglobal(show='f')
     gif = True if 'g' in args or 'gif' in args \
         else False
-    caption = True if 'c' in args  or 'caption' in args \
+    caption = True if 'c' in args or 'caption' in args \
         else False
     zombie = True if futurama or 'z' in args or 'zombie' in args \
         else False
@@ -109,8 +64,11 @@ def getFrinkiacPic(args, futurama=False):
     if caption and gif:
         return ''
 
-    url, txt = f.getRandomPicURL(use_gif=gif, use_caption=caption, 
-        include_zombie=zombie)
+    url, txt = f.getRandomPicURL(
+        use_gif=gif,
+        use_caption=caption,
+        include_zombie=zombie
+    )
     fname = url.split('/')
     fname = f'{IMAGE_DIR}/{fname[len(fname) - 1]}'
 
@@ -124,20 +82,25 @@ def getFrinkiacPic(args, futurama=False):
     if txt:
         writeTextToPic(fname, txt, futurama)
 
-    print(f'Got the pic at {datetime.now().strftime("%H:%M:%S")}\n', flush=False)
+    print(
+        f'Got the pic at {datetime.now().strftime("%H:%M:%S")}\n',
+        flush=False
+    )
     IMAGE_QUEUE.put(fname)
     return fname
 
 
 def writeTextToPic(path, text, futurama):
     # Decode the base64 text
-    plaintext = base64.b64decode(text).decode() # also converts from bytes to str
-    
+    plaintext = base64.b64decode(text).decode()
+
     image = Image.open(path)
     size = random.randrange(30, 42, 2)
-    if futurama: size = size * 3
-    font  = ImageFont.truetype("font/AlteHaasGroteskRegular.ttf", size)
-    draw  = ImageDraw.Draw(image)
+    if futurama:
+        size = size * 3  # futurama pics are bigger so
+        # increasing the text to compensate?
+    font = ImageFont.truetype("font/AlteHaasGroteskRegular.ttf", size)
+    draw = ImageDraw.Draw(image)
     x, y = [random.randint(10, 200) for i in range(2)]
     draw.text((x, y), plaintext, font=font)
     image.save(path, "JPEG")
@@ -146,35 +109,48 @@ def writeTextToPic(path, text, futurama):
 async def getDeepfriedImage(filename):
     '''Send image to node container to deep fry it.'''
     params = {'filename': filename, 'intense': False}
-    req = requests.post(f'http://{DEEPFRY_DNS}:{COMMON_PORT}/api/', params=params)
+    req = requests.post(
+        f'http://{DEEPFRY_DNS}:{COMMON_PORT}/api/',
+        params=params
+    )
 
-    # no response
+    # No response
     if not req.json():
         print('nothing came back from deepfrier')
         return (400, '')
 
-    # deepfry failed
+    # Deepfry failed
     if req.json()['code'] == 400:
         print('got 400 from deepfrier')
         return (400, '')
 
-    # success
+    # Success
     elif req.json()['code'] == 200:
         print('success from deepfrier!')
         ret_filename = req.json()['filename']
-        IMAGE_QUEUE.put(ret_filename) # processed image
+        IMAGE_QUEUE.put(ret_filename)  # processed image
         return (200, f'{DEEPFRY_DIR}/{ret_filename}')
 
-    # fallback
+    # Fallback
     else:
-        print('didn\'t get nothing but didn\'t get code 400 either from deepfrier')
+        print('got no response but didnt get nothing either?')
+
+
+async def send_message_queue(ctx, queue):
+    '''Sends all `discord.Embed`s in a queue, eventually clearing it.'''
+    while not queue.empty():
+        await ctx.send(embed=queue.get())
+        queue.task_done()
 
 
 if __name__ == '__main__':
-    print('hey there. starting up now...', flush=False)
-    # Start by getting the token from environment variables
+    print(r'''  ___  ____   __    __  __ _  ____  _  _
+ / __)(  _ \ /  \  /  \(  / )(  __)( \/ )
+( (_ \ )   /(  O )(  O ))  (  ) _)  )  /
+ \___/(__\_) \__/  \__/(__\_)(____)(__/
+    ''', flush=False)
+    # Get token from environment variable (.env file in root dir)
     token = os.environ.get('TOKEN')
-
     bot = commands.Bot(command_prefix='!')
 
     @bot.command()
@@ -183,23 +159,38 @@ if __name__ == '__main__':
 
     @bot.command()
     async def wat(ctx):
-        await ctx.send(embed=discord.Embed(description="You can send simpsons or futurama pic by typing `!s` or `!f` respectively. Use `!s gif` or `!s g` for a GIF (takes a while to send). Use `!s c` for captions. the text is a random size and is placed randomly somewhere in the picture. For the simpsons, use `!s z` to include pics from zombie simpsons in the rng"))
+        await ctx.send(embed=discord.Embed(
+            description=(
+                "You can send simpsons or futurama pic by typing `!s` or `!f`"
+                " respectively. Use `!s gif` or `!s g` for a GIF"
+                " (takes a while to send). Use `!s c` for captions."
+                " The text is a random size and is placed randomly"
+                " somewhere in the picture. For the simpsons, use `!s z`"
+                " to include pics from zombie simpsons in the RNG."
+            )
+        ))
 
-
-    # Get pokemon moveset info from smogon
+    # Smogon: moveset data
     @bot.command()
     async def smogon(ctx, *args):
-        s = Smogon(SMOGON_DNS, COMMON_PORT, args)
-        response_queue = s.getMovesetData()
-        while not response_queue.empty():
-            await ctx.send(embed=response_queue.get())
-            response_queue.task_done()
+        s = Smogon(SMOGON_DNS, COMMON_PORT)
+        response_queue = s.get_moveset_data(args)
+        await send_message_queue(ctx, response_queue)
+
+    # Smogon: pokemon formats
+    @bot.command()
+    async def formats(ctx, *args):
+        s = Smogon(SMOGON_DNS, COMMON_PORT)
+        response_queue = s.get_formats(args)
+        await send_message_queue(ctx, response_queue)
 
     @bot.command()
     async def s(ctx, *args):
         path = getFrinkiacPic(args)
         if not path:
-            await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
+            await ctx.send(embed=discord.Embed(
+                description="You can't put captions on a gif yet, sorry")
+            )
         else:
             await ctx.send(file=discord.File(path))
         await clearImageQueue()
@@ -208,7 +199,10 @@ if __name__ == '__main__':
     async def f(ctx, *args):
         path = getFrinkiacPic(args, futurama=True)
         if not path:
-            await ctx.send(embed=discord.Embed(description="You can't put captions on a gif yet, sorry"))
+            await ctx.send(embed=discord.Embed(
+                description="You can't put captions on a gif yet, sorry"
+                )
+            )
         else:
             await ctx.send(file=discord.File(path))
         await clearImageQueue()
@@ -224,7 +218,13 @@ if __name__ == '__main__':
         # TODO: do url images get attached as images automatically?
         if not images:
             url = ctx.message.content.split('!df ')[1]
-            if re.match(r'http://|https://', url) and (url.endswith('.jpg') or url.endswith('.png')):
+            if (
+                re.match(r'http://|https://', url) and
+                (
+                    url.endswith('.jpg') or
+                    url.endswith('.png')
+                )
+            ):
                 print(f'regex matched in message')
                 images.append(url)
 
