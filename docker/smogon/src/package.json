@@ -1,8 +1,8 @@
 {
     "name": "smogon_crawler",
     "version": "0.0.1",
-    "description": "Crawls smogon for stuff.",
-    "author": "yeah...",
+    "description": "Crawls smogon for relevant information.",
+    "author": "moosejaw",
     "main": "app.js",
     "scripts": {
       "start": "node app.js"
