@@ -8,8 +8,6 @@ services:
         - "TOKEN=${TOKEN}"
         - COMMON_PORT=8888
         - SMOGON_DNS=smogon
-    volumes:
-        - deepfry_volume:/usr/src/app/deepfried
     restart: always
     container_name: bot
 

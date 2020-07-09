@@ -1,4 +1,2 @@
 discord
 requests
-compuglobal
-Pillow

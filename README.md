@@ -56,7 +56,7 @@ If the response succeeds, the bot sends the moveset information, the titles of t
 
 The response sent by the Bot is an embed containing the key moveset information: ability, nature, EVs, held item and moves.
 
-*I'm planning to switch from Zombie to Puppeteer eventually (a headless browser which is still being actively maintained), unless I can find somewhere detailing the (new) Smogon API endpoints, if they even exist publicly.*
+*I'm planning to switch from Zombie to Puppeteer eventually (a headless browser which is still being actively maintained), unless I can find somewhere detailing the (new) Smogon API endpoints, if they even exist publicly. Even then, the entire Smogon interface would require a heavy overhaul.*
 
 ## Disclaimer
 

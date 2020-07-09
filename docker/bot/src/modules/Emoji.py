@@ -1,3 +1,6 @@
+# This is completely broken and needs sorting out...
+# TODO: this
+
 class Emoji:
     '''Contains the emoji lookups and convenient functions
     for returning messages.'''
