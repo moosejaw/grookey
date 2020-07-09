@@ -2,15 +2,12 @@ version: '3'
 services:
   bot:
     build:
-      context: bot/
+      context: docker/bot/
       dockerfile: Dockerfile
     environment:
         - "TOKEN=${TOKEN}"
         - COMMON_PORT=8888
         - SMOGON_DNS=smogon
-        - IMAGE_DIR=images
-        - DEEPFRY_DNS=deepfrier
-        - DEEPFRY_DIR=./deepfried
     volumes:
         - deepfry_volume:/usr/src/app/deepfried
     restart: always
@@ -18,7 +15,7 @@ services:
 
   smogon:
     build:
-        context: smogon/
+        context: docker/smogon/
         dockerfile: Dockerfile
     environment:
         - PORT=8888
@@ -26,20 +23,3 @@ services:
         - 8888
     restart: always
     container_name: smogon
-
-  deepfrier:
-    build:
-      context: deepfrier/
-      dockerfile: Dockerfile
-    environment:
-        - PORT=8888
-        - DEEPFRY_DIR=./deepfried
-    expose:
-        - 8888
-    volumes:
-        - deepfry_volume:/home/node/app/deepfried
-    restart: always
-    container_name: deepfrier
-
-volumes:
-  deepfry_volume:
