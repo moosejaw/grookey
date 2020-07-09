@@ -4,7 +4,7 @@ A discord bot for competitive Pokémon battling related things, plus some other 
 
 ## Is grookey right for me?
 
-The primary selling point of grookey is that it can retrieve data from Smogon and send it back in a pretty format within discord. Want to know Dragapult's movesets in Sword and Shield? No problem:
+The primary selling point of grookey is that it can retrieve data from Smogon and send it back in a pretty format within discord. Want to know Dragapult's competitive movesets in Sword and Shield? No problem:
 
 ## What other alternatives are there?
 
