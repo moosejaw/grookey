@@ -218,7 +218,7 @@ class Smogon:
     async def parse_moveset_data(self, text, metagame):
         '''
         Returns moveset data from Smogon in a dictionary corresponding to each
-        relvant field. The 'moveset data' being parsed in this context is the 
+        relvant field. The 'moveset data' being parsed in this context is the
         text one would see if they go to a Pokemon's movesets page and click
         the 'Export' button next to a moveset.
         '''
@@ -248,6 +248,7 @@ class Smogon:
                     nat = line.split(' ')[0]
                     if nat.lower() in self.nature_stats.keys():
                         nat = nat + f' ({self.nature_stats[nat.lower()]})'
+                    data['Nature'] = nat
 
             # Parse the moves
             moves = list(map(lambda x: x + '\n', moves))
