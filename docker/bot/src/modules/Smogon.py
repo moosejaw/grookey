@@ -1,3 +1,4 @@
+import re
 import random
 import discord
 import aiohttp
@@ -204,7 +205,7 @@ class Smogon:
                 )
 
                 # Parse data and build embed
-                data = await self.parse_moveset_data(data)
+                data = await self.parse_moveset_data(data, metagame)
                 for field, value in data.items():
                     embed.add_field(
                         name=field,
@@ -214,75 +215,55 @@ class Smogon:
                 message_queue.put(embed)
             return message_queue
 
-    async def parse_moveset_data(self, text):
-        '''Returns moveset data from Smogon in a dict.'''
-        # TODO: make better
-        text = text.split('\n')
+    async def parse_moveset_data(self, text, metagame):
+        '''
+        Returns moveset data from Smogon in a dictionary corresponding to each
+        relvant field. The 'moveset data' being parsed in this context is the 
+        text one would see if they go to a Pokemon's movesets page and click
+        the 'Export' button next to a moveset.
+        '''
+        # TODO: Make DRY
+        data = {}
+        text = text.split('\n')  # Split the moveset text into separate lines
 
-        # Get pokemon and item
-        item = None
-        if '@' in text[0]:
-            item = text[0].split(' @ ')[1]
+        # Non-gen 1 pokemon
+        if not metagame == 'rb':
+            # Get moves into a separate list for convenience
+            moves_line = 0
+            for i in range(len(text)):
+                if re.match(r'^-', text[i]):
+                    text, moves = text[:i], text[i:]
+                    break
 
-        pre_gen_three = False
-        moves = []
+            # Now parse every other line
+            # there's a lot of elif's here but there's only
+            # about 3 to go through so i'll leave this for now...
 
-        line_with_evs = 2
-        line_with_nature = 3
-        first_move_line = 4
+            # Set the item if the pokemon has one
+            if '@' in text[0]:
+                data['Item'] = text[0].split(' @ ')[1]
+            text.pop(0)
 
-        # Get moves if gen 1
-        ability = None
-        if text[1].startswith('-'):
-            pre_gen_three = True
-            moves = text[1:]
-        # Otherwise get ability
+            for line in text:
+                if ':' in line:
+                    f, v = line.split(':')
+                    data[f] = v.strip()
+                else:
+                    nat = line.split(' ')[0]
+                    if nat.lower() in self.nature_stats.keys():
+                        nat = nat + f' ({self.nature_stats[nat.lower()]})'
+
+            # Parse the moves
+            moves = list(map(lambda x: x + '\n', moves))
+            data['Moves'] = ''.join(moves)
+            return data
         else:
-            if 'Ability' in text[1]:
-                ability = text[1].split('Ability: ')[1]
-            else:
-                # No ability in moveset data but pkmn is > gen 3
-                line_with_evs -= 1
-                line_with_nature -= 1
-                first_move_line -= 1
-
-        # Get EVs and nature if < gen 3
-        evs = None
-        nature = None
-        if not pre_gen_three:
-            evs = text[line_with_evs].split('EVs:')[1]
-            nature = text[line_with_nature].split(' Nature')[0].strip()
-            moves = text[first_move_line:]
-
-            nature_spread = self.nature_stats[nature.lower()] \
-                if nature.lower() in self.nature_stats.keys() \
-                else None
-
-        if nature_spread and nature:
-            nature = f'{nature} ({nature_spread})'
-
-        moves_string = ''
-        first_move = True
-        for m in moves:
-            if first_move:
-                moves_string = m
-                first_move = False
-            else:
-                moves_string = f'{moves_string}\n{m}'
-
-        # Build dict containing data and return
-        # TODO: make less ugly
-        d = {}
-        if item:
-            d['Item'] = item.strip()
-        if nature:
-            d['Nature'] = nature.strip()
-        if ability:
-            d['Ability'] = ability.strip()
-        if evs:
-            d['EVs'] = evs.strip()
-        d['Moves'] = moves_string
-        return d
+            # Pokemon is from gen 1 so just get the moves
+            # and return those (no items, abilities, etc exist)
+            text.pop(0)
+            text = list(map(lambda x: x + '\n', text))
+            data['Moves'] = ''.join(text)
+            return data
 
     async def get_formats(self, args):
         message_queue = Queue()
