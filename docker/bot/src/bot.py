@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-'''
-bot for discord.
-'''
 import os
 
 import discord
@@ -42,14 +39,14 @@ if __name__ == '__main__':
     @bot.command()
     async def movesets(ctx, *args):
         s = Smogon(SMOGON_DNS, COMMON_PORT)
-        response_queue = s.get_moveset_data(args)
+        response_queue = await s.get_moveset_data(args)
         await send_message_queue(ctx, response_queue)
 
     # Smogon: pokemon formats
     @bot.command()
     async def formats(ctx, *args):
         s = Smogon(SMOGON_DNS, COMMON_PORT)
-        response_queue = s.get_formats(args)
+        response_queue = await s.get_formats(args)
         await send_message_queue(ctx, response_queue)
 
     # Run the bot

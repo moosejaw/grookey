@@ -1,6 +1,6 @@
 import random
 import discord
-import requests
+import aiohttp
 from queue import Queue
 
 
@@ -68,7 +68,7 @@ class Smogon:
         # Embed properties
         self.error_colour = 0xe42e2e
 
-    def call(self, params, endpoint):
+    async def call(self, params, endpoint):
         '''
         Sends an API call to the Smogon container at the given
         endpoint and returns the appropriate response.
@@ -86,29 +86,29 @@ class Smogon:
             error message corresponding to the response code.
         '''
         # Get the response from the docker container
-        res = None
-        for i in range(self.retry_lim):
-            req = requests.get(
-                f'http://{self.cont_dns}:{self.cont_port}/{endpoint}/',
-                params=params
-            )
-
-            if not req.json():
-                if i <= self.retry_lim:
-                    continue
-                else:
-                    # No response at all
-                    return discord.Embed(
-                        title="No response!",
-                        description=(
-                            "Didn't get a response from the Smogon"
-                            " API container. Is it running?"
-                        ),
-                        color=self.error_colour
-                    )
-            else:
-                res = req.json()
-                break
+        async with aiohttp.ClientSession() as s:
+            res = None
+            for i in range(self.retry_lim):
+                async with s.get(
+                    f'http://{self.cont_dns}:{self.cont_port}/{endpoint}/',
+                    params=params
+                ) as r:
+                    res = await r.json()
+                    if not res:
+                        if i <= self.retry_lim:
+                            continue
+                        else:
+                            # No response at all, used up all retries
+                            return discord.Embed(
+                                title="No response!",
+                                description=(
+                                    "Didn't get a response from the Smogon"
+                                    " API container. Is it running?"
+                                ),
+                                color=self.error_colour
+                            )
+                    else:
+                        break
 
         # Handle non-200 responses
         if res['code'] == 404:
@@ -142,11 +142,11 @@ class Smogon:
         # On success
         return res
 
-    def get_moveset_data(self, args):
+    async def get_moveset_data(self, args):
         message_queue = Queue()
 
         # Validation
-        arg_validation = self.validate_args(args)
+        arg_validation = await self.validate_args(args)
         if arg_validation is not True:
             message_queue.put(arg_validation)
             return message_queue
@@ -155,10 +155,10 @@ class Smogon:
         # e = Emoji()
 
         # Parse the args
-        metagame, pokemon = self.parse_args(args)
+        metagame, pokemon = await self.parse_args(args)
 
         # Make API call
-        response = self.call(
+        response = await self.call(
             {'pkmn': pokemon, 'metagame': metagame},
             'movesets'
         )
@@ -198,12 +198,13 @@ class Smogon:
                 )
 
                 # Attach thumbnail
+                t_url = await self.get_thumbnail_url(pokemon, metagame)
                 embed.set_thumbnail(
-                    url=self.get_thumbnail_url(pokemon, metagame)
+                    url=t_url
                 )
 
                 # Parse data and build embed
-                data = self.parse_moveset_data(data)
+                data = await self.parse_moveset_data(data)
                 for field, value in data.items():
                     embed.add_field(
                         name=field,
@@ -213,7 +214,7 @@ class Smogon:
                 message_queue.put(embed)
             return message_queue
 
-    def parse_moveset_data(self, text):
+    async def parse_moveset_data(self, text):
         '''Returns moveset data from Smogon in a dict.'''
         # TODO: make better
         text = text.split('\n')
@@ -283,19 +284,19 @@ class Smogon:
         d['Moves'] = moves_string
         return d
 
-    def get_formats(self, args):
+    async def get_formats(self, args):
         message_queue = Queue()
         # Validation
-        arg_validation = self.validate_args(args)
+        arg_validation = await self.validate_args(args)
         if arg_validation is not True:
             message_queue.put(arg_validation)
             return message_queue
 
         # Parse args
-        metagame, pokemon = self.parse_args(args)
+        metagame, pokemon = await self.parse_args(args)
 
         # Make API call
-        response = self.call(
+        response = await self.call(
             {'pkmn': pokemon, 'metagame': metagame},
             'formats'
         )
@@ -315,13 +316,14 @@ class Smogon:
                 description=desc,
                 url=response['url']
             )
+            t_url = await self.get_thumbnail_url(pokemon, metagame)
             embed.set_thumbnail(
-                url=self.get_thumbnail_url(pokemon, metagame)
+                url=t_url
             )
             message_queue.put(embed)
             return message_queue
 
-    def get_thumbnail_url(self, pokemon, metagame):
+    async def get_thumbnail_url(self, pokemon, metagame):
         '''Returns the URL of the thumbnail of a given Pokemon.'''
         extension = "gif"
         if metagame == 'dp' or metagame == 'rb' or metagame == 'rs':
@@ -334,7 +336,7 @@ class Smogon:
             f"{url_metagame}/{pokemon}.{extension}"
         )
 
-    def validate_args(self, args, expected_len=2):
+    async def validate_args(self, args, expected_len=2):
         '''
         Validates the arguments given for a Pokemon and a metagame.
         Returns True if arguments are valid, a Discord embed describing
@@ -342,7 +344,7 @@ class Smogon:
         '''
         # Not enough arguments
         if len(args) != expected_len:
-            embed = self.add_metagames_to_embed(
+            embed = await self.add_metagames_to_embed(
                 discord.Embed(
                     title="Not enough arguments!",
                     description=(
@@ -356,7 +358,7 @@ class Smogon:
 
         # Metagame isn't two letters long
         elif not list(filter(lambda x: len(x) == 2, args)):
-            embed = self.add_metagames_to_embed(
+            embed = await self.add_metagames_to_embed(
                 discord.Embed(
                     title="Invalid metagame argument!",
                     description="Make sure you include a valid metagame.",
@@ -367,7 +369,7 @@ class Smogon:
         else:
             return True
 
-    def parse_args(self, args):
+    async def parse_args(self, args):
         '''
         Parses the arguments given and returns them in a tuple
         in the format (metagame, pokemon)
@@ -381,7 +383,7 @@ class Smogon:
             pokemon = args[1]
         return (metagame, pokemon)
 
-    def add_metagames_to_embed(self, embed):
+    async def add_metagames_to_embed(self, embed):
         '''Adds all the possible metagame combinations to a discord.Embed'''
         for key, value in self.metagames.items():
             embed.add_field(
