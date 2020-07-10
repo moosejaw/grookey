@@ -235,10 +235,6 @@ class Smogon:
                     text, moves = text[:i], text[i:]
                     break
 
-            # Now parse every other line
-            # there's a lot of elif's here but there's only
-            # about 3 to go through so i'll leave this for now...
-
             # Set the item if the pokemon has one
             if '@' in text[0]:
                 data['Item'] = text[0].split(' @ ')[1]
