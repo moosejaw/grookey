@@ -301,6 +301,12 @@ class Smogon:
             message_queue.put(embed)
             return message_queue
 
+    async def get_basestats(self, pokemon, metagame):
+        '''
+        Returns a Pokemon's base stats from a given metagame.
+        '''
+        pass
+
     async def get_thumbnail_url(self, pokemon, metagame):
         '''Returns the URL of the thumbnail of a given Pokemon.'''
         extension = "gif"
