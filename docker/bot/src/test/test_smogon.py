@@ -2,12 +2,13 @@
 import os
 import pytest
 import discord
+import asyncio
+import requests
 from modules.Smogon import Smogon
 
-s = Smogon(os.envrion['SMOGON_DNS'], os.environ['COMMON_PORT'])
+s = Smogon(os.environ['SMOGON_DNS'], os.environ['COMMON_PORT'])
 
 
-# General data retrieval tests
 def test_api_call_responses():
     '''
     Tests the call() function to see if the responses coming back are as
@@ -25,8 +26,14 @@ def test_api_call_responses():
 
     for endpoint in ['movesets', 'formats']:
         for param in range(len(param_cases)):
-            res = await s.call(param_cases[param], endpoint)
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            loop = asyncio.get_event_loop()
 
+            res = loop.run_until_complete(
+                s.call(param_cases[param], endpoint)
+            )
+
+            loop.close()
             if param <= 2:
                 assert not isinstance(res, dict)
                 assert isinstance(res, discord.Embed)
@@ -46,15 +53,22 @@ def test_validate_args():
     being used are valid for sending to the Smogon container.
     '''
     arg_cases = [
-        ['grookey']  # Not enough args
-        ['ss']  # Not enough args
-        ['grookey', 'ss', 'blah']  # Too many args
-        ['grookey', 'swsh']  # Invalid metagame (not 2 chars)
-        ['grookey', 'ss']  # OK
-        ['ss', 'grookey']  # OK
+        ['grookey'],  # Not enough args
+        ['ss'],  # Not enough args
+        ['grookey', 'ss', 'blah'],  # Too many args
+        ['grookey', 'swsh'],  # Invalid metagame (not 2 chars)
+        ['grookey', 'ss'],  # OK
+        ['ss', 'grookey'],  # OK
     ]
     for args in range(len(arg_cases)):
-        returned = await s.validate_args(args, expected_len=2)
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+
+        returned = loop.run_until_complete(
+            s.validate_args(arg_cases[args], expected_len=2)
+        )
+
+        loop.close()
 
         if args <= 3:
             assert returned is not True
@@ -67,3 +81,93 @@ def test_validate_args():
 
         else:
             assert returned is True
+
+
+def test_parse_args():
+    '''
+    Tests the parse_args() function to ensure that the Pokemon and metagame
+    are being extracted in the right order.
+    '''
+    arg_cases = [
+        ['ss', 'grookey'],  # Metagame is 1st
+        ['grookey', 'ss']  # Metagame is 2nd
+    ]
+
+    for args in arg_cases:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+
+        metagame, pokemon = loop.run_until_complete(
+            s.parse_args(args)
+        )
+
+        loop.close()
+
+        assert metagame == 'ss'
+        assert pokemon == 'grookey'
+
+
+def test_get_thumbnail_url():
+    '''
+    Tests the get_thumbnail_url() function to ensure that the correct
+    thumbnail URLs are being returned given specific metagames.
+    '''
+    arg_cases = [
+        ['mewtwo', 'rb'],  # Should be .png
+        ['heracross', 'gs'],  # Should be .gif
+        ['dragonite', 'rs'],  # Should be .png
+        ['hippowdon', 'dp'],  # Should be .png
+        ['druddigon', 'bw'],  # Should be .gif
+        ['gallade', 'xy'],  # Should be .gif
+        ['mudsdale', 'sm'],  # Should be .gif
+        ['grookey', 'ss']  # Should be .gif
+    ]
+
+    for arg in arg_cases:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+
+        returned_url = loop.run_until_complete(
+            s.get_thumbnail_url(arg[0], arg[1])
+        )
+
+        loop.close()
+
+        expected_extension = '.gif'
+        if arg[1] in ['rb', 'rs', 'dp']:
+            expected_extension = '.png'
+
+        assert returned_url.endswith(expected_extension)
+
+
+'''
+The following tests ensure that the Smogon URL formats have not changed.
+They aren't necessarily an indication of broken logic in the Smogon module,
+but rather failure of these tests indicate that Smogon have changed their URL
+syntax.
+'''
+
+
+def test_smogon_thumbnail_syntax():
+    '''
+    Tests the sprite/thumbnail URL.
+    '''
+    for url in [
+        'https://www.smogon.com/dex/media/sprites/xy/grookey.gif',
+        'https://www.smogon.com/dex/media/sprites/dp/bronzor.png'
+    ]:
+        r = requests.get(url)
+        assert r.status_code == 200
+
+
+def test_smogon_dex_syntax():
+    '''
+    Tests the dex URL (which points to the page containing
+    moveset/format/stats info).
+    '''
+    for url in [
+        'https://www.smogon.com/dex/xy/pokemon/abomasnow/',
+        'https://www.smogon.com/dex/rb/pokemon/mewtwo/'
+    ]:
+        r = requests.get(url)
+        assert r.status_code == 200
