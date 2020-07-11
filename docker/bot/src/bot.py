@@ -6,7 +6,9 @@ from discord.ext import commands
 
 from modules.Emoji import Emoji
 from modules.Smogon import Smogon
+from modules.Exceptions import TokenMissingError
 
+CMD_PREFIX = 'g!'
 COMMON_PORT = os.environ['COMMON_PORT']
 SMOGON_DNS = os.environ['SMOGON_DNS']
 
@@ -20,8 +22,19 @@ async def send_message_queue(ctx, queue):
 
 if __name__ == '__main__':
     # Get token from .env file
-    token = os.environ.get('TOKEN')
-    bot = commands.Bot(command_prefix='g!')
+    try:
+        token = os.environ.get('TOKEN')
+    except KeyError:
+        raise TokenMissingError((
+            "The TOKEN environment variable does not exist."
+            "Ensure it is set in the .env file."
+        ))
+    finally:
+        if not token:
+            raise TokenMissingError((
+                "You have not set your token in the .env file."
+            ))
+    bot = commands.Bot(command_prefix=CMD_PREFIX)
 
     @bot.event
     async def on_ready():
@@ -31,7 +44,7 @@ if __name__ == '__main__':
 ( (_ \ )   /(  O )(  O ))  (  ) _)  )  /
  \___/(__\_) \__/  \__/(__\_)(____)(__/ ''', flush=False)
         await bot.change_presence(activity=discord.Game(
-            'g!help to show command list!'
+            f'{CMD_PREFIX}help to show command list!'
             )
         )
 
