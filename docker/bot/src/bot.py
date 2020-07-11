@@ -4,7 +4,6 @@ import os
 import discord
 from discord.ext import commands
 
-from modules.Emoji import Emoji
 from modules.Smogon import Smogon
 from modules.Exceptions import TokenMissingError
 
