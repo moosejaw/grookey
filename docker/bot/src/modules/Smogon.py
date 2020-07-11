@@ -62,7 +62,8 @@ class Smogon:
             'rock': (0x5c534f, r'<:rock_sym:675854254623162374>'),
             'steel': (0xd6d3d2, r'<:steel_sym:675854254837334038>'),
             'flying': (0xc9deff, r'<:flying_sym:675854254740602880>'),
-            'ground': (0x9c6f51, r'<:ground_sym:675854254597996584>')
+            'ground': (0x9c6f51, r'<:ground_sym:675854254597996584>'),
+            'normal': (0xe3e3e3, r'<:normal_sym:675854254740865024>')
         }
         self.retry_lim = 3  # number of times to retry sending requests
 
