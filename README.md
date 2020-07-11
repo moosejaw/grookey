@@ -1,8 +1,10 @@
 # grookey
 
+[![Build Status](https://travis-ci.com/moosejaw/grookey.svg?token=rs3GxxmbfsMk74STQmsV&branch=master)](https://travis-ci.com/moosejaw/grookey)
+
 A discord bot for competitive Pokémon battling related things, plus some other nifty features. This is a hobby project.
 
-## Is grookey right for me?
+## At a glance
 
 The primary selling point of grookey is that it can retrieve data from Smogon and send it back in a pretty format within discord. Want to know Dragapult's competitive movesets in Sword and Shield? No problem:
 
