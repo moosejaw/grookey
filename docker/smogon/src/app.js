@@ -146,4 +146,50 @@ app.get('/formats/', (req, res) => {
     );
 });
 
+app.get('/basestats/', (req, res) => {
+    // Setup
+    let browser = new Browser();
+    let url = `http://www.smogon.com/dex/${req.query.metagame}/pokemon/${req.query.pkmn}`;
+    let resp = {
+        data: [],
+        types: [],
+        url: url,
+        code: 404
+    };
+
+    browser.visit(url).then(
+        // Fulfilled
+        () => {
+            // Get the typing of the pokemon
+            let types = browser.queryAll('.TypeList');
+            for (let item of types[0].children) {
+                if (resp.types.length == 2) { break; }
+                else {
+                    resp.types.push(item.textContent.toLowerCase());
+                }
+            }
+
+            // Get stats
+            let stat_table = browser.queryAll('.PokemonStats');
+            // First set of stats -> tbody -> trs containing data
+            for (let item of stat_table[0].children[0].children) {
+                let txt = item.textContent.match(/^.*:[0-9]{1,3}/g);
+                if (!txt.length) {
+                    console.log('Non-match found (unexpected)');
+                } else {
+                    resp.data.push(txt[0].split(':'));
+                }
+            }
+            resp.code = 200;
+            res.send(resp);
+        },
+
+        // Rejected
+        () => {
+            resp.code = 404;
+            res.send(resp);
+        }
+    );
+});
+
 app.listen(process.env.PORT);

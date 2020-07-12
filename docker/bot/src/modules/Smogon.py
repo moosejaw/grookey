@@ -3,7 +3,7 @@ import random
 import discord
 import aiohttp
 from queue import Queue
-
+from .Emotes import Emotes
 
 class Smogon:
     def __init__(self, cont_dns, cont_port):
@@ -302,11 +302,76 @@ class Smogon:
             message_queue.put(embed)
             return message_queue
 
-    async def get_basestats(self, pokemon, metagame):
+    async def get_basestats(self, args):
         '''
         Returns a Pokemon's base stats from a given metagame.
         '''
-        pass
+        message_queue = Queue()
+
+        # Validate args
+        args_valid = await self.validate_args(args)
+        if args_valid is not True:
+            message_queue.put(args_valid)
+            return message_queue
+
+        # Parse args
+        metagame, pokemon = await self.parse_args(args)
+
+        # Call
+        response = await self.call(
+            {'pkmn': pokemon, 'metagame': metagame},
+            'basestats'
+        )
+        if not isinstance(response, dict):
+            message_queue.put(response)
+            return message_queue
+        else:
+            # Build the embed
+            colour = self.types[response['types'][0]][0]
+            stat_total = sum([int(i[1]) for i in response["data"]])
+
+            # Get stat bars
+            desc = f'**Total: {stat_total}**\n'
+            for stat in response["data"]:
+                bar = await self.get_stat_emote_string(
+                    stat[1]
+                )
+                desc = (
+                    f'{desc}'
+                    f'{stat[0]}: {bar} **{stat[1]}**'
+                    '\n'
+                )
+            embed = discord.Embed(
+                title=f'{pokemon.capitalize()} ({metagame.upper()}) Stats',
+                description=desc,
+                url=response["url"],
+                color=colour
+            )
+            t_url = await self.get_thumbnail_url(pokemon, metagame)
+            embed.set_thumbnail(
+                url=t_url
+            )
+            message_queue.put(embed)
+            return message_queue
+
+    async def get_stat_emote_string(self, stat_value):
+        '''Returns a string containing the base stat bar emote
+        based on the magnitude of the stat.'''
+        e = Emotes()
+        stat_value = int(stat_value)
+        scale = int(stat_value / 20)
+        if stat_value < 60:
+            bar_col = 'r'
+        elif 60 <= stat_value < 80:
+            bar_col = 'o'
+        elif 80 <= stat_value < 90:
+            bar_col = 'y'
+        elif 90 <= stat_value < 110:
+            bar_col = 'pg'
+        else:
+            bar_col = 'bg'
+        bar = e.stat_emotes[bar_col]
+        return ''.join([bar for i in range(scale)])
 
     async def get_thumbnail_url(self, pokemon, metagame):
         '''Returns the URL of the thumbnail of a given Pokemon.'''

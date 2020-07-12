@@ -4,6 +4,7 @@ import pytest
 import discord
 import asyncio
 import requests
+from queue import Queue
 from modules.Smogon import Smogon
 
 s = Smogon(os.environ['SMOGON_DNS'], os.environ['COMMON_PORT'])
@@ -138,6 +139,42 @@ def test_get_thumbnail_url():
             expected_extension = '.png'
 
         assert returned_url.endswith(expected_extension)
+
+
+def test_get_basestats():
+    '''Tests the get_basestats function, validating arguments
+    and checking the return message will send properly.
+
+    For Gen 1, smogon still splits the 'special' stat into
+    Sp Atk. and Sp Def., they just have the same value.'''
+    arg_cases = [
+        ['pinsir', 'rb'],  # Normal case
+        ['dragapult', 'ss'],  # Normal case
+        ['arceus', 'dp'],  # Poke with very high base stats
+    ]
+
+    for args in arg_cases:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+
+        output = loop.run_until_complete(
+            s.get_basestats(args)
+        )
+        loop.close()
+
+        # Verify
+        response = output.get()
+        assert len(response.description) <= 2048  # Max number of chars allowed
+        for stat in [
+            'HP',
+            'Attack',
+            'Defense',
+            'Sp. Atk',
+            'Sp. Def',
+            'Speed'
+        ]:
+            assert stat in response.description
+        output.task_done()
 
 
 '''
