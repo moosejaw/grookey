@@ -12,15 +12,8 @@ COMMON_PORT = os.environ['COMMON_PORT']
 SMOGON_DNS = os.environ['SMOGON_DNS']
 
 
-async def send_message_queue(ctx, queue):
-    '''Sends all `discord.Embed`s in a queue, eventually clearing it.'''
-    while not queue.empty():
-        await ctx.send(embed=queue.get())
-        queue.task_done()
-
-
-if __name__ == '__main__':
-    # Get token from .env file
+def get_token():
+    '''Gets the Discord auth token from environment variables.'''
     try:
         token = os.environ.get('TOKEN')
     except KeyError:
@@ -33,6 +26,19 @@ if __name__ == '__main__':
             raise TokenMissingError((
                 "You have not set your token in the .env file."
             ))
+    return token
+
+
+async def send_message_queue(ctx, queue):
+    '''Sends all `discord.Embed`s in a queue, eventually clearing it.'''
+    while not queue.empty():
+        await ctx.send(embed=queue.get())
+        queue.task_done()
+
+
+if __name__ == '__main__':
+    # Get token from .env file
+    token = get_token()
     bot = commands.Bot(command_prefix=CMD_PREFIX)
 
     @bot.event
@@ -59,6 +65,13 @@ if __name__ == '__main__':
     async def formats(ctx, *args):
         s = Smogon(SMOGON_DNS, COMMON_PORT)
         response_queue = await s.get_formats(args)
+        await send_message_queue(ctx, response_queue)
+
+    # Smogon: basestats of a poke in a metagame
+    @bot.command()
+    async def stats(ctx, *args):
+        s = Smogon(SMOGON_DNS, COMMON_PORT)
+        response_queue = await s.get_basestats(args)
         await send_message_queue(ctx, response_queue)
 
     # Run the bot
