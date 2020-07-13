@@ -11,70 +11,70 @@ const Browser = require('zombie');
 const express = require('express');
 const app     = express();
 
-function getTimeInSecs() {
-    let d = new Date();
-    return d.toTimeString();
+
+function getURLString(meta, pkmn) {
+    return `http://www.smogon.com/dex/${meta}/pokemon/${pkmn}`
 }
 
+function getResponseTemplate(url) {
+    return {
+        data: {},
+        url: url,
+        code: 404
+    }
+}
+
+function getPokemonTypeList(browser) {
+    let type_list = [];
+    let types = browser.queryAll('.TypeList');
+    for (let item of types[0].children) {
+        if (type_list.length == 2) { break; }
+        else {
+            type_list.push(item.textContent.toLowerCase());
+        }
+    }
+    return type_list;
+}
 
 app.get('/movesets/', (req, res) => {
-    console.log(`Started responding to a req at ${getTimeInSecs()}`);
-
     let browser = new Browser();
-    console.log(`Opened a new browser instance at ${getTimeInSecs()}`);
 
     // Make a browser object
-    let url = `http://www.smogon.com/dex/${req.query.metagame}/pokemon/${req.query.pkmn}`;
-    let resp = {
-        data: [],
-        titles: [],
-        tier: '',
-        url: url,
-        types: [],
-        code: 404
-    };
+    let url = getURLString(req.query.metagame, req.query.pkmn);
+    let resp = getResponseTemplate(url);
 
-    // Go to the smogon page
-    console.log(`Going to visit ${url}`);
     browser.visit(url).then(
+        // Fulfilled
         () => {
-            console.log(`Visited ${url}`);
-            console.log(`Loaded the page at ${getTimeInSecs()}`);
-
             // Get the typing of the pokemon
-            let types = browser.queryAll('.TypeList');
-            for (let item of types[0].children) {
-                if (resp.types.length == 2) { break; }
-                else {
-                    resp.types.push(item.textContent.toLowerCase());
-                }
-            }
+            resp.data.types = getPokemonTypeList(browser);
 
             // Get the moveset data
+            resp.data.movesets = [];
             let movesets = browser.queryAll('.ExportButton');
             if (movesets.length > 0) {
                 // Push the button and copy/paste the textarea stuff
                 movesets.forEach((v, i) => {
                     browser.pressButton(v);
-                    resp.data.push(browser.query('textarea').textContent);
+                    resp.data.movesets.push(
+                        browser.query('textarea').textContent
+                    );
                     browser.pressButton(v);
                 });
 
-                console.log(`Got the moveset data at ${getTimeInSecs()}`);
-
                 // Find the tier of the Poke
+                resp.data.tier = '';
                 let tierDone = false;
                 browser.queryAll('tr').forEach((v, i) => {
                     if (!tierDone && v.children.item(0).textContent == 'Tier') {
-                        console.log(`Found a tier at index ${i} of trs. The tier is ${v.children.item(1).textContent}`);
-                        resp.tier = v.children.item(1).textContent;
+                        resp.data.tier = v.children.item(1).textContent;
                         tierDone = true;
-                        console.log('Set the tierDone to true');
                     }
                 });
 
                 // Now do the ugly thing to get the moveset titles...
                 // TODO: Don't make this check every single div on the page, there must be a better way
+                resp.data.titles = [];
                 let titles = new Set();
                 browser.queryAll('div').forEach((v, i) => {
                     let btns  = v.getElementsByClassName('ExportButton');
@@ -88,13 +88,8 @@ app.get('/movesets/', (req, res) => {
                     }
                 });
 
-                console.log(`Done iterating through the divs at ${getTimeInSecs()}`);
-
                 // Push the titles into the array
-                titles.forEach((v, i) => { resp.titles.push(v); });
-
-                // Send the response
-                console.log(`Returning the request at ${getTimeInSecs()}`);
+                titles.forEach((v, i) => { resp.data.titles.push(v); });
 
                 resp.code = 200;
                 res.send(resp);
@@ -105,9 +100,9 @@ app.get('/movesets/', (req, res) => {
                 res.send(resp);
             }
         },
+
+        // Rejected
         () => { 
-            console.log(`Rejected promise (404) at ${getTimeInSecs()}`);
-            console.log(`Returning ${JSON.stringify(resp)}`);
             res.send(resp); 
         }
     );
@@ -116,12 +111,8 @@ app.get('/movesets/', (req, res) => {
 app.get('/formats/', (req, res) => {
     // Setup
     let browser = new Browser();
-    let url = `http://www.smogon.com/dex/${req.query.metagame}/pokemon/${req.query.pkmn}`;
-    let resp = {
-        data: [],
-        url: url,
-        code: 404
-    };
+    let url = getURLString(req.query.metagame, req.query.pkmn);
+    let resp = getResponseTemplate(url);
 
     browser.visit(url).then(
         // Fulfilled
@@ -129,9 +120,10 @@ app.get('/formats/', (req, res) => {
             let div = browser.queryAll('.PokemonPage-StrategySelector');
             if (div.length == 0) { resp.code = 405; } 
             else {
+                resp.data.formats = [];
                 // div with class name -> ul (children[2])-> li (children)
                 for (let item of div[0].children[2].children) {
-                    resp.data.push(item.textContent.toLowerCase())
+                    resp.data.formats.push(item.textContent.toLowerCase())
                 }
                 resp.code = 200;
             }
@@ -149,27 +141,17 @@ app.get('/formats/', (req, res) => {
 app.get('/basestats/', (req, res) => {
     // Setup
     let browser = new Browser();
-    let url = `http://www.smogon.com/dex/${req.query.metagame}/pokemon/${req.query.pkmn}`;
-    let resp = {
-        data: [],
-        types: [],
-        url: url,
-        code: 404
-    };
+    let url = getURLString(req.query.metagame, req.query.pkmn);
+    let resp = getResponseTemplate(url);
 
     browser.visit(url).then(
         // Fulfilled
         () => {
             // Get the typing of the pokemon
-            let types = browser.queryAll('.TypeList');
-            for (let item of types[0].children) {
-                if (resp.types.length == 2) { break; }
-                else {
-                    resp.types.push(item.textContent.toLowerCase());
-                }
-            }
+            resp.data.types = getPokemonTypeList(browser);
 
             // Get stats
+            resp.data.stats = [];
             let stat_table = browser.queryAll('.PokemonStats');
             // First set of stats -> tbody -> trs containing data
             for (let item of stat_table[0].children[0].children) {
@@ -177,7 +159,7 @@ app.get('/basestats/', (req, res) => {
                 if (!txt.length) {
                     console.log('Non-match found (unexpected)');
                 } else {
-                    resp.data.push(txt[0].split(':'));
+                    resp.data.stats.push(txt[0].split(':'));
                 }
             }
             resp.code = 200;

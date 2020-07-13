@@ -5,6 +5,7 @@ import aiohttp
 from queue import Queue
 from .Emotes import Emotes
 
+
 class Smogon:
     def __init__(self, cont_dns, cont_port):
         # Container DNS and port
@@ -170,20 +171,23 @@ class Smogon:
             return message_queue
         else:
             # Build the embed(s) containing the data
-            tier = response['tier']
-            colour = self.types[response['types'][0]][0]  # based on first type
+            tier = response['data']['tier']
+            colour = self.types[response['data']['types'][0]][0]  
+            # based on first type
 
             # Add types
-            type_symbols = response['types'][0].capitalize()
-            if len(response['types']) == 2:
+            type_symbols = response['data']['types'][0].capitalize()
+            if len(response['data']['types']) == 2:
                 type_symbols = (
                     type_symbols +
                     ' / ' +
-                    response['types'][1].capitalize()
+                    response['data']['types'][1].capitalize()
                 )
 
             # Build the embed
-            for data, title in list(zip(response['data'], response['titles'])):
+            for data, title in list(zip(
+                response['data']['movesets'], response['data']['titles']
+            )):
                 embed = discord.Embed(
                     title=title,
                     color=colour,
@@ -288,7 +292,7 @@ class Smogon:
                 f'For {self.metagames[metagame]}, {pokemon.capitalize()} '
                 ' has the following formats:\n'
             )
-            for fmt in response['data']:
+            for fmt in response['data']['formats']:
                 desc = desc + f' `{fmt}`'
             embed = discord.Embed(
                 title=f'{pokemon.capitalize()} [{metagame.upper()}]',
@@ -327,12 +331,12 @@ class Smogon:
             return message_queue
         else:
             # Build the embed
-            colour = self.types[response['types'][0]][0]
-            stat_total = sum([int(i[1]) for i in response["data"]])
+            colour = self.types[response['data']['types'][0]][0]
+            stat_total = sum([int(i[1]) for i in response['data']['stats']])
 
             # Get stat bars
             desc = f'**Total: {stat_total}**\n'
-            for stat in response["data"]:
+            for stat in response['data']['stats']:
                 bar = await self.get_stat_emote_string(
                     stat[1]
                 )
@@ -344,7 +348,7 @@ class Smogon:
             embed = discord.Embed(
                 title=f'{pokemon.capitalize()} ({metagame.upper()}) Stats',
                 description=desc,
-                url=response["url"],
+                url=response['url'],
                 color=colour
             )
             t_url = await self.get_thumbnail_url(pokemon, metagame)
