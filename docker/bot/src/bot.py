@@ -74,5 +74,11 @@ if __name__ == '__main__':
         response_queue = await s.get_basestats(args)
         await send_message_queue(ctx, response_queue)
 
+    @bot.command()
+    async def move(ctx, *args):
+        s = Smogon(SMOGON_DNS, COMMON_PORT)
+        response_queue = await s.get_move(args)
+        await send_message_queue(ctx, response_queue)
+
     # Run the bot
     bot.run(token)

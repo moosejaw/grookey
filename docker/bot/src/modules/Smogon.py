@@ -306,6 +306,45 @@ class Smogon:
             message_queue.put(embed)
             return message_queue
 
+    async def get_move(self, args):
+        '''
+        Returns the Smogon entry for a particular move.
+        '''
+        message_queue = Queue()
+
+        # Process args
+        args = await self.process_args(args)
+        if not isinstance(args, tuple):
+            message_queue.put(args)
+            return message_queue
+
+        # Unpack args and make API call
+        metagame, move = args
+        response = await self.call(
+            {'move': move, 'metagame': metagame},
+            'move'
+        )
+        if not isinstance(response, dict):
+            message_queue.put(response)
+            return message_queue
+        else:
+            embed = discord.Embed(
+                title=f'{move.capitalize()} ({metagame.upper()})',
+                description=response['data']['description'],
+                color=self.types[response['data']['type'].lower()][0],
+                url=response['url']
+            )
+            del response['data']['move']
+            del response['data']['description']
+            for field, value in response['data'].items():
+                embed.add_field(
+                    name=field.capitalize() if field != 'pp'
+                    else field.upper(),
+                    value=value
+                )
+            message_queue.put(embed)
+            return message_queue
+
     async def get_basestats(self, args):
         '''
         Returns a Pokemon's base stats from a given metagame.
@@ -389,6 +428,16 @@ class Smogon:
             "https://www.smogon.com/dex/media/sprites/"
             f"{url_metagame}/{pokemon}.{extension}"
         )
+
+    async def process_args(self, args, expected_len=2):
+        '''
+        Helper function to process the arguments of an input.
+        '''
+        args_valid = await self.validate_args(args)
+        if args_valid is not True:
+            return args_valid
+        arg_list = await self.parse_args(args)
+        return arg_list
 
     async def validate_args(self, args, expected_len=2):
         '''

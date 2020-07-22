@@ -177,6 +177,13 @@ def test_get_basestats():
         output.task_done()
 
 
+def test_get_move_details():
+    '''Tests the move description function.'''
+    arg_cases = [
+        
+    ]
+    pass
+
 '''
 The following tests ensure that the Smogon URL formats have not changed.
 They aren't necessarily an indication of broken logic in the Smogon module,
@@ -204,7 +211,9 @@ def test_smogon_dex_syntax():
     '''
     for url in [
         'https://www.smogon.com/dex/xy/pokemon/abomasnow/',
-        'https://www.smogon.com/dex/rb/pokemon/mewtwo/'
+        'https://www.smogon.com/dex/rb/pokemon/mewtwo/',
+
     ]:
+        print(f'Trying {url}')
         r = requests.get(url)
         assert r.status_code == 200

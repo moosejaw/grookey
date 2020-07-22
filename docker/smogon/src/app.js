@@ -174,4 +174,46 @@ app.get('/basestats/', (req, res) => {
     );
 });
 
+app.get('/move/', (req, res) => {
+    // Setup
+    let browser = new Browser();
+    let url     = `https://www.smogon.com/dex/${req.query.metagame}/moves/${req.query.move}/`;
+    let resp    = getResponseTemplate(url);
+
+    browser.visit(url).then(
+        // Fulfilled
+        () => {
+            // Get title of move
+            resp.data.move = browser.query('h1').textContent;
+
+            // Get move data in table
+            // .moveInfo <table> -> tbody -> trs -> th and td
+            let tbl = browser.queryAll('.MoveInfo');
+            for (let row of tbl[0].children[0].children) {
+                // Should populate category, type, power, acc, priority and PP
+                resp.data[row.children[0].textContent.toLowerCase()] = row.children[1].textContent;
+            }
+
+            // Get the description
+            // It *should* be the only <p> tag on the page with NO children
+            let desc = browser.queryAll('p');
+            for (let item of desc) {
+                if (item.children.length == 0 && item.parentNode.className != "DexSearch-results") {
+                    resp.data.description = item.textContent;
+                    break;
+                }
+            }
+
+            resp.code = 200;
+            res.send(resp);
+        },
+
+        // Rejected
+        () => {
+            resp.code = 404;
+            res.send(resp);
+        }
+    )
+});
+
 app.listen(process.env.PORT);
