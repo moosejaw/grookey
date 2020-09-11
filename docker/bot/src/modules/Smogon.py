@@ -115,12 +115,13 @@ class Smogon:
 
         # Handle non-200 responses
         if res['code'] == 404:
+            # FIXME: pep8
+            desc = "Smogon returned a 404 (page not found) error. Did you spell everything correctly?"
+            if endpoint == 'ability' or endpoint == 'move':
+                desc = f'{desc}\nIt is possible that what you have searched doesn\'t exist in this metagame. Try a different metagame maybe?'
             return discord.Embed(
                 title="Page not found!",
-                description=(
-                    "Smogon returned a 404 (page not found) error."
-                    " Did you spell everything correctly?"
-                ),
+                description=desc,
                 color=self.error_colour
             )
         elif res['code'] == 405:
@@ -144,6 +145,28 @@ class Smogon:
 
         # On success
         return res
+
+    async def get_test(self, args):
+        message_queue = Queue()
+
+        # Process args
+        args = await self.process_args(args)
+        if not isinstance(args, tuple):
+            message_queue.put(args)
+            return message_queue
+
+        # Unpack args and make API call
+        metagame, move = args
+        response = await self.call(
+            {'move': move, 'metagame': metagame},
+            'test'
+        )
+        if not isinstance(response, dict):
+            message_queue.put(response)
+            return message_queue
+        else:
+            message_queue.put(response['data'])
+            return message_queue
 
     async def get_moveset_data(self, args):
         message_queue = Queue()
@@ -345,6 +368,53 @@ class Smogon:
             message_queue.put(embed)
             return message_queue
 
+    async def get_ability(self, args):
+        '''
+        Returns a description of a specific ability from
+        a given metagame.
+        '''
+        message_queue = Queue()
+
+        # Validate args
+        args_valid = await self.validate_args(args)
+        if args_valid is not True:
+            message_queue.put(args_valid)
+            return message_queue
+
+        # Parse args
+        metagame, ability = await self.parse_args(args)
+
+        if metagame == 'rb' or metagame == 'gs':
+            embed = discord.Embed(
+                title="Invalid metagame!",
+                description=(
+                    "Abilities are only in `rs` (Ruby/Sapphire/Emerald) "
+                    "and later."
+                ),
+                color=self.error_colour
+            )
+            message_queue.put(embed)
+            return message_queue
+
+        # Call
+        response = await self.call(
+            {'ability': ability, 'metagame': metagame},
+            'ability'
+        )
+        if not isinstance(response, dict):
+            message_queue.put(response)
+            return message_queue
+        else:
+            # Build the embed
+            embed = discord.Embed(
+                title=f'{ability.capitalize()} ({metagame.upper()})',
+                description=response['data']['description'],
+                url=response['url'],
+                color=0xe3e3e3
+            )
+            message_queue.put(embed)
+            return message_queue
+
     async def get_basestats(self, args):
         '''
         Returns a Pokemon's base stats from a given metagame.
@@ -477,6 +547,8 @@ class Smogon:
         Parses the arguments given and returns them in a tuple
         in the format (metagame, pokemon)
         '''
+        # TODO: accept args with more than one word.. eg 'ROCK SMASH' or 'IRON BARBS'
+        # make it so you don't have to use dashes!
         args = list(map(lambda x: str(x).lower(), args))
         if args[0] not in self.metagames.keys():
             metagame = args[1]
