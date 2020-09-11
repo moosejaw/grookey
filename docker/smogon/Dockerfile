@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:current-slim
 
 WORKDIR /home/node/app
 COPY src/ ./
