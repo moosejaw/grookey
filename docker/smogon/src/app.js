@@ -6,6 +6,7 @@ those first.
 */
 // Set up the zombie browser
 const Browser = require('zombie');
+//const b       = require('puppeteer');
 
 // Now the express stuff
 const express = require('express');
@@ -35,6 +36,17 @@ function getPokemonTypeList(browser) {
     }
     return type_list;
 }
+
+/*
+app.get('/test/', async (req, res) => {
+    let url     = `https://www.smogon.com/dex/${req.query.metagame}/moves/${req.query.move}/`;
+    const browser = await b.launch();
+    const page = await browser.newPage();
+    await page.goto(url);
+    const tbl = await page.$('.MoveInfo');
+    res.send({'code': 200, 'data': tbl.innerText});
+});
+*/
 
 app.get('/movesets/', (req, res) => {
     let browser = new Browser();
@@ -209,6 +221,35 @@ app.get('/move/', (req, res) => {
         },
 
         // Rejected
+        () => {
+            resp.code = 404;
+            res.send(resp);
+        }
+    )
+});
+
+app.get('/ability/', (req, res) => {
+    let browser = new Browser();
+    let url     = `https://www.smogon.com/dex/${req.query.metagame}/abilities/${req.query.ability}/`;
+    let resp    = getResponseTemplate(url);
+
+    browser.visit(url).then(
+        // On fulfilled
+        () => {
+            let desc = browser.queryAll('p');
+            for (let item of desc) {
+                let re = /^Type to/g;
+                if (!re.test(item.textContent)) {
+                    resp.data.description = item.textContent;
+                    break;
+                } 
+            }
+            
+            resp.code = 200;
+            res.send(resp);
+        },
+
+        // On rejected
         () => {
             resp.code = 404;
             res.send(resp);
