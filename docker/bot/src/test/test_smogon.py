@@ -176,6 +176,10 @@ def test_get_basestats():
             assert stat in response.description
         output.task_done()
 
+def test_get_ability_details():
+    '''Tests the function which gets an ability description.'''
+    pass
+
 
 def test_get_move_details():
     '''Tests the move description function.'''
